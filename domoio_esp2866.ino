@@ -6,7 +6,7 @@
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
-#include "coap.h"
+#include "cantcoap.h"
 
 const char* host = "10.254.0.200";
 const int port = 1234;
@@ -16,6 +16,7 @@ WiFiClientSecure client;
 
 #define BUFFER_SIZE 512
 
+
 byte buffer[BUFFER_SIZE];
 
 void setup() {
@@ -23,18 +24,12 @@ void setup() {
 
   connect_wifi();
 
+  Serial.print("BUILTING: ");
+  Serial.println(LED_BUILTIN);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   // ArduinoOTA.begin();
-
-  // Serial.println("");
-  // Serial.println("WiFi connected");
-  // Serial.println("IP address: ");
-  // Serial.println(WiFi.localIP());
-
-
-  // Serial.print("connecting to ");
-  // Serial.println(host);
-
 }
 
 void loop() {
@@ -42,17 +37,84 @@ void loop() {
     connect();
     return;
   }
-  Serial.println("listening: ");
-  int size = listen();
-  if (size > 0) {
-    Serial.print("Received: ");
-    Serial.println(size);
+
+  receive_messages();
+
+}
+
+void receive_messages() {
+  int size = receive();
+
+  if (size <= 0) {
+    return;
   }
+
+  Serial.print("Received: ");
+  Serial.println(size);
+
+  CoapPDU coap_msg = CoapPDU(buffer, size);
+  // coap_packet_t pkt;
+
+  if (!coap_msg.validate()) {
+    Serial.print("Bad packet rc");
+    return;
+  }
+
+  process_message(&coap_msg);
 }
 
 
-void connect_wifi() {
+#define URI_BUFFER_LENGTH 25
 
+void process_message(CoapPDU *msg) {
+  char uri_buf[URI_BUFFER_LENGTH];
+  int uri_size;
+  msg->getURI(&uri_buf[0], URI_BUFFER_LENGTH, &uri_size);
+  Serial.print("URI: ");
+  Serial.println(uri_buf);
+
+
+  int payload_length = msg->getPayloadLength();
+  uint8_t *payload = msg->getPayloadPointer();
+  Serial.print("Payload ");
+  Serial.println(payload_length);
+
+  int port_id = buff2i(payload, 0);
+  int value = buff2i(payload, 2);
+  Serial.print("Port: ");
+  Serial.println(port_id);
+
+  Serial.print("Value: ");
+  Serial.println(value);
+
+  if (value == 1) {
+    digitalWrite(LED_BUILTIN, LOW);
+  } else {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
+
+
+  // Send the response
+
+  CoapPDU *reply = new CoapPDU();
+
+	reply->setType(CoapPDU::COAP_ACKNOWLEDGEMENT);
+	reply->setCode(msg->getCode());
+	reply->setToken(msg->getTokenPointer(), msg->getTokenLength());
+	reply->setMessageID(msg->getMessageID());
+  send(reply->getPDUPointer(), reply->getPDULength());
+  delete(reply);
+}
+
+int buff2i(byte *buf, int offset) {
+  byte first = *(buf + offset);
+  byte last = *(buf + offset + 1);
+  return last | first << 8;
+}
+
+
+
+void connect_wifi() {
   WiFiManager wifiManager;
 
   if (!wifiManager.autoConnect("domoio_123")) {
@@ -67,6 +129,7 @@ void connect_wifi() {
 
 
 void connect() {
+  Serial.println("connecting");
   if (!client.connect(host, port)) {
     Serial.println("connection failed");
     return;
@@ -76,10 +139,9 @@ void connect() {
 }
 
 bool handsake() {
-  Serial.println("starting handsake");
   send(hardware_id, strlen(hardware_id));
   //  String line = client.readStringUntil(0);
-  int size = listen();
+  int size = block_until_receive();
 
   Serial.print("Received reply to handsake ");
   Serial.println(size);
@@ -91,7 +153,7 @@ bool handsake() {
 
 
 
-int send(const char* data, int size) {
+int send(const void* data, int size) {
 
   int packet_size = size + 2;
   byte buffer[packet_size];
@@ -105,7 +167,7 @@ int send(const char* data, int size) {
 }
 
 
-int listen() {
+int block_until_receive() {
   int size;
   while((size = receive()) == -1) {
     delay(250);
@@ -120,7 +182,7 @@ int receive() {
   size_buf[0] = client.read();
   size_buf[1] = client.read();
 
-  int size =  size_buf[1] | size_buf[0] << 8;
+  int size = size_buf[1] | size_buf[0] << 8;
   if (size > BUFFER_SIZE) {
     Serial.println("ERROR: BUFFER OVER OVERFLOW");
     return -1;
@@ -131,16 +193,6 @@ int receive() {
   }
 
   return size;
-
-  // coap_packet_t pkt;
-
-  // if (coap_parse(&pkt, buffer, size) != 0) {
-  //   Serial.print("Bad packet rc");
-  //   return;
-  // }
-
-  // Serial.println("Good packet!");
-  // return;
 }
 
 void clear_buffer() {

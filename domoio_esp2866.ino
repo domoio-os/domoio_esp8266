@@ -1,12 +1,13 @@
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 // #include <ArduinoOTA.h>
-
 
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include "cantcoap.h"
+#include "domoio.h"
 
 const char* host = "10.254.0.200";
 const int port = 1234;
@@ -16,55 +17,56 @@ WiFiClientSecure client;
 
 #define BUFFER_SIZE 512
 
-
 byte buffer[BUFFER_SIZE];
-
-void setup() {
-  Serial.begin(57600);
-
-  connect_wifi();
-
-  Serial.print("BUILTING: ");
-  Serial.println(LED_BUILTIN);
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-
-  // ArduinoOTA.begin();
-}
-
-void loop() {
-  if (!client.connected()) {
-    connect();
-    return;
-  }
-
-  receive_messages();
-
-}
-
-void receive_messages() {
-  int size = receive();
-
-  if (size <= 0) {
-    return;
-  }
-
-  Serial.print("Received: ");
-  Serial.println(size);
-
-  CoapPDU coap_msg = CoapPDU(buffer, size);
-  // coap_packet_t pkt;
-
-  if (!coap_msg.validate()) {
-    Serial.print("Bad packet rc");
-    return;
-  }
-
-  process_message(&coap_msg);
-}
 
 
 #define URI_BUFFER_LENGTH 25
+void clear_buffer() {
+  memset(buffer, 0, BUFFER_SIZE);
+}
+
+int receive() {
+  if (!client.available()) return -1;
+
+  int size_buf[2];
+  size_buf[0] = client.read();
+  size_buf[1] = client.read();
+
+  int size = size_buf[1] | size_buf[0] << 8;
+  if (size > BUFFER_SIZE) {
+    Serial.println("ERROR: OVERFLOW");
+    return -1;
+  }
+  clear_buffer();
+  for (int i=0; i < size; i++) {
+    buffer[i] = client.read();
+  }
+
+  return size;
+}
+
+int block_until_receive() {
+  int size;
+  while((size = receive()) == -1) {
+    delay(250);
+  }
+  return size;
+}
+
+
+int send(const void* data, int size) {
+
+  int packet_size = size + 2;
+  byte buffer[packet_size];
+
+  buffer[0] = (byte) ((size >> 8) & 0xFF);
+  buffer[1] = (byte) (size & 0xFF);
+
+  memcpy(&buffer[2], data, size);
+
+  return client.write(&buffer[0], packet_size);
+}
+
 
 void process_message(CoapPDU *msg) {
   char uri_buf[URI_BUFFER_LENGTH];
@@ -96,22 +98,15 @@ void process_message(CoapPDU *msg) {
 
   // Send the response
 
-  CoapPDU *reply = new CoapPDU();
+  // CoapPDU *reply = new CoapPDU();
 
-	reply->setType(CoapPDU::COAP_ACKNOWLEDGEMENT);
-	reply->setCode(msg->getCode());
-	reply->setToken(msg->getTokenPointer(), msg->getTokenLength());
-	reply->setMessageID(msg->getMessageID());
-  send(reply->getPDUPointer(), reply->getPDULength());
-  delete(reply);
+	// reply->setType(CoapPDU::COAP_ACKNOWLEDGEMENT);
+	// reply->setCode(msg->getCode());
+	// reply->setToken(msg->getTokenPointer(), msg->getTokenLength());
+	// reply->setMessageID(msg->getMessageID());
+  // send(reply->getPDUPointer(), reply->getPDULength());
+  // delete(reply);
 }
-
-int buff2i(byte *buf, int offset) {
-  byte first = *(buf + offset);
-  byte last = *(buf + offset + 1);
-  return last | first << 8;
-}
-
 
 
 void connect_wifi() {
@@ -127,17 +122,6 @@ void connect_wifi() {
 }
 
 
-
-void connect() {
-  Serial.println("connecting");
-  if (!client.connect(host, port)) {
-    Serial.println("connection failed");
-    return;
-  }
-
-  handsake();
-}
-
 bool handsake() {
   send(hardware_id, strlen(hardware_id));
   //  String line = client.readStringUntil(0);
@@ -152,49 +136,61 @@ bool handsake() {
 }
 
 
+void connect() {
+  Serial.println("connecting");
+  if (!client.connect(host, port)) {
+    Serial.println("connection failed");
+    return;
+  }
 
-int send(const void* data, int size) {
-
-  int packet_size = size + 2;
-  byte buffer[packet_size];
-
-  buffer[0] = (byte) ((size >> 8) & 0xFF);
-  buffer[1] = (byte) (size & 0xFF);
-
-  memcpy(&buffer[2], data, size);
-
-  return client.write(&buffer[0], packet_size);
+  handsake();
 }
 
 
-int block_until_receive() {
-  int size;
-  while((size = receive()) == -1) {
-    delay(250);
+
+void network_loop() {
+  int size = receive();
+
+  if (size <= 0) {
+    return;
   }
-  return size;
+
+  Serial.print("Received: ");
+  Serial.println(size);
+
+  CoapPDU coap_msg = CoapPDU(buffer, size);
+  // coap_packet_t pkt;
+
+  if (!coap_msg.validate()) {
+    Serial.print("Bad packet rc");
+    return;
+  }
+
+  process_message(&coap_msg);
 }
 
-int receive() {
-  if (!client.available()) return -1;
 
-  int size_buf[2];
-  size_buf[0] = client.read();
-  size_buf[1] = client.read();
+void setup() {
+  // WiFi.mode(WIFI_OFF);
 
-  int size = size_buf[1] | size_buf[0] << 8;
-  if (size > BUFFER_SIZE) {
-    Serial.println("ERROR: BUFFER OVER OVERFLOW");
-    return -1;
-  }
-  clear_buffer();
-  for (int i=0; i < size; i++) {
-    buffer[i] = client.read();
-  }
+  Serial.begin(115200);
 
-  return size;
+  connect_wifi();
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+
+  // ArduinoOTA.begin();
 }
 
-void clear_buffer() {
-  memset(buffer, 0, BUFFER_SIZE);
+void loop() {
+  if (!client.connected()) {
+    connect();
+    return;
+  }
+
+
+  network_loop();
+
+  // serial_loop();
 }

@@ -17,4 +17,12 @@ int buff2i(byte *buf, int offset);
 
 void serial_loop();
 
+
+/*
+ * crypto
+ */
+
+int decrypt(const char *src, char *out, int len);
+
+
 #endif //DOMOIO_H

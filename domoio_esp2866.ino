@@ -1,13 +1,17 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <ESP8266WiFi.h>
+
 #include <WiFiClientSecure.h>
 // #include <ArduinoOTA.h>
 
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+// #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include "cantcoap.h"
 #include "domoio.h"
+#include "wificonf.h"
+#include "storage.h"
 
 const char* host = "10.254.0.200";
 const int port = 1234;
@@ -109,17 +113,17 @@ void process_message(CoapPDU *msg) {
 }
 
 
-void connect_wifi() {
-  WiFiManager wifiManager;
+// void connect_wifi() {
+//   WiFiManager wifiManager;
 
-  if (!wifiManager.autoConnect("domoio_123")) {
-    Serial.println("failed to connect and hit timeout");
-    delay(3000);
-    //reset and try again, or maybe put it to deep sleep
-    ESP.reset();
-    delay(5000);
-  }
-}
+//   if (!wifiManager.autoConnect("domoio_123")) {
+//     Serial.println("failed to connect and hit timeout");
+//     delay(3000);
+//     //reset and try again, or maybe put it to deep sleep
+//     ESP.reset();
+//     delay(5000);
+//   }
+// }
 
 
 bool handsake() {
@@ -170,15 +174,23 @@ void network_loop() {
 }
 
 
+
+
 void setup() {
+
   // WiFi.mode(WIFI_OFF);
-
+  // WiFi.persistent(false);
+  Storage::begin();
   Serial.begin(115200);
+  delay(1000);
 
-  connect_wifi();
+  //  WifiConf::reset_config();
+  WifiConf::connect();
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
+
+
 
   // ArduinoOTA.begin();
 }
@@ -188,6 +200,11 @@ void loop() {
     connect();
     return;
   }
+
+  // char ssid[33];
+  // Storage::get_ssid(&ssid[0], 33);
+  // Serial.print("ssid: ");
+  // Serial.println(&ssid[0]);
 
 
   network_loop();

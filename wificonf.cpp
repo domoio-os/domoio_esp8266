@@ -15,6 +15,15 @@ void handleNotFound(){
   server->send(404, "text/html", "<h1>404 - Not Found</h1>");
 }
 
+void start_ap_mode() {
+  IPAddress ip(192, 168, 5, 1);
+  IPAddress gateway(192, 168, 5, 1);
+  IPAddress netmask(255, 255, 255, 0);
+
+  WiFi.config(ip, gateway, netmask);
+  String ssid = "DIO_" + String(ESP.getChipId());
+  WiFi.softAP(ssid.c_str());
+}
 
 bool wait_for_wifi() {
   double start = millis();
@@ -24,12 +33,25 @@ bool wait_for_wifi() {
   return WiFi.status() == WL_CONNECTED;
 }
 void reconnect(const char *ssid, const char *password) {
+  Serial.println(ssid);
+  Serial.println(password);
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  wait_for_wifi();
-  ESP.reset();
-  delay(1000);
+  if (wait_for_wifi()) {
+    Serial.println("Connected to new AP");
+    delay(5000);
+    ESP.reset();
+    delay(5000);
+
+  } else {
+    Serial.println("Error connecting to new AP");
+    start_ap_mode();
+  }
+
+
+  // ESP.reset();
+  // delay(1000);
 }
 
 
@@ -44,8 +66,6 @@ String get_public_key(){
     return String("NULL");
   }
   int size = f.size();
-  // byte buffer[size];
-  // f.readBytes((char *)&buffer[0], size);
 
   int string_len = (size * 2) + 1;
   char buffer[string_len];
@@ -109,19 +129,12 @@ void handle_submit() {
   String buffer = "";
   buffer += "{\"ssid\":\"" + ssid + "\", \"status\":\"ok\"}";
   server->send(200, "application/json", buffer);
+  delay(1000);
   reconnect(ssid.c_str(), &pwd_buf[0]);
 }
 
 
 
-void start_ap_mode() {
-  IPAddress ip(192, 168, 5, 1);
-  IPAddress gateway(192, 168, 5, 1);
-  IPAddress netmask(255, 255, 255, 0);
-
-  WiFi.config(ip, gateway, netmask);
-  WiFi.softAP("domoio_device");
-}
 
 
 void run_config_server() {
@@ -138,11 +151,13 @@ void run_config_server() {
 }
 
 void connect_wifi() {
+  Serial.println("Connecting");
   WiFi.begin();
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
   }
+
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }

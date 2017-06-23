@@ -40,24 +40,16 @@ void reconnect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
   if (wait_for_wifi()) {
     Serial.println("Connected to new AP");
-    delay(5000);
-    ESP.reset();
-    delay(5000);
-
+    reset()
   } else {
     Serial.println("Error connecting to new AP");
     start_ap_mode();
   }
-
-
-  // ESP.reset();
-  // delay(1000);
 }
 
 
 
 String get_public_key(){
-
   SPIFFS.begin();
   File f = SPIFFS.open("/server.pub.der", "r");
 

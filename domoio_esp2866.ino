@@ -12,6 +12,8 @@
 #include "domoio.h"
 #include "wificonf.h"
 #include "storage.h"
+#include "reactduino.h"
+#include "scenes.h"
 
 const char* host = "10.254.0.200";
 const int port = 1234;
@@ -128,7 +130,6 @@ void process_message(CoapPDU *msg) {
 
 bool handsake() {
   send(hardware_id, strlen(hardware_id));
-  //  String line = client.readStringUntil(0);
   int size = block_until_receive();
 
   Serial.print("Received reply to handsake ");
@@ -163,7 +164,6 @@ void network_loop() {
   Serial.println(size);
 
   CoapPDU coap_msg = CoapPDU(buffer, size);
-  // coap_packet_t pkt;
 
   if (!coap_msg.validate()) {
     Serial.print("Bad packet rc");
@@ -175,21 +175,36 @@ void network_loop() {
 
 
 
+void delete_credentials() {
+  WifiConf::reset_config();
+  reset();
+}
+
+void reset() {
+  delay(5000);
+  ESP.reset();
+  delay(5000);
+}
+
+reactduino::StateContainer state;
+HomeController home_controller(&state);
 
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   // WiFi.mode(WIFI_OFF);
-  // WiFi.persistent(false);
+  WiFi.persistent(true);
   Storage::begin();
   Serial.begin(115200);
   delay(1000);
 
-  //  WifiConf::reset_config();
+
+  // WifiConf::reset_config();
   WifiConf::connect();
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
 
+  reactduino::push_controller(&home_controller);
 
 
   // ArduinoOTA.begin();
@@ -206,7 +221,7 @@ void loop() {
   // Serial.print("ssid: ");
   // Serial.println(&ssid[0]);
 
-
+  reactduino::loop();
   network_loop();
 
   // serial_loop();

@@ -1,7 +1,8 @@
 #ifndef DOMOIO_H
 #define DOMOIO_H
 
-
+void delete_credentials();
+void reset();
 /*
  * Tools
  */

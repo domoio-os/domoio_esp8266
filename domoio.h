@@ -3,6 +3,17 @@
 
 void delete_credentials();
 void reset();
+
+/*
+ * messages
+ */
+
+bool is_connected();
+void connect();
+void receive_messages();
+int send(const void* data, int size);
+
+
 /*
  * Tools
  */

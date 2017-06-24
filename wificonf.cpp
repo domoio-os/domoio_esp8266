@@ -3,6 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include "FS.h"
+#include "storage.h"
 
 ESP8266WebServer *server = NULL;;
 
@@ -40,7 +41,7 @@ void reconnect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
   if (wait_for_wifi()) {
     Serial.println("Connected to new AP");
-    reset()
+    reset();
   } else {
     Serial.println("Error connecting to new AP");
     start_ap_mode();
@@ -96,19 +97,19 @@ void handle_info() {
 
 
 void handle_submit() {
-  String debug = "vars: \n";
-  int count = server->args();
-  for (int i=0; i < count; i++) {
-    String name = server->argName(i);
-    String value = server->arg(i);
-    debug += name + " = " + value + "\n";
-  }
+  // String debug = "vars: \n";
+  // int count = server->args();
+  // for (int i=0; i < count; i++) {
+  //   String name = server->argName(i);
+  //   String value = server->arg(i);
+  //   debug += name + " = " + value + "\n";
+  // }
 
-  Serial.print(debug);
+  // Serial.print(debug);
 
   String ssid = server->arg("ssid");
   String encrypted_pwd = server->arg("pwd");
-
+  String claim_code = server->arg("claim_code");
   int pwd_len = encrypted_pwd.length();
   char pwd_buf[pwd_len];
 
@@ -121,6 +122,10 @@ void handle_submit() {
   String buffer = "";
   buffer += "{\"ssid\":\"" + ssid + "\", \"status\":\"ok\"}";
   server->send(200, "application/json", buffer);
+
+  // Save the claim_code
+  Storage::set_claim_code(claim_code.c_str());
+
   delay(1000);
   reconnect(ssid.c_str(), &pwd_buf[0]);
 }

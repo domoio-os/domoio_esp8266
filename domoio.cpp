@@ -17,6 +17,8 @@ WiFiClientSecure client;
 const char* host = "10.254.0.200";
 const int port = 1234;
 
+int message_id_counter = 0;
+
 void clear_buffer() {
   memset(buffer, 0, BUFFER_SIZE);
 }
@@ -55,6 +57,7 @@ int block_until_receive() {
 }
 const char *expected = "HELLO";
 int expected_len = strlen(expected);
+
 bool handsake() {
   send(hardware_id, strlen(hardware_id));
   int size = block_until_receive();
@@ -100,6 +103,15 @@ int send(const void* data, int size) {
   return client.write(&buffer[0], packet_size);
 }
 
+int send_confirmation(CoapPDU *msg) {
+  CoapPDU reply;
+
+	reply.setType(CoapPDU::COAP_ACKNOWLEDGEMENT);
+	reply.setCode(msg->getCode());
+	reply.setToken(msg->getTokenPointer(), msg->getTokenLength());
+	reply.setMessageID(msg->getMessageID());
+  return send(reply.getPDUPointer(), reply.getPDULength());
+}
 
 void process_message(CoapPDU *msg) {
   char uri_buf[URI_BUFFER_LENGTH];
@@ -130,15 +142,7 @@ void process_message(CoapPDU *msg) {
 
 
   // Send the response
-
-  // CoapPDU *reply = new CoapPDU();
-
-	// reply->setType(CoapPDU::COAP_ACKNOWLEDGEMENT);
-	// reply->setCode(msg->getCode());
-	// reply->setToken(msg->getTokenPointer(), msg->getTokenLength());
-	// reply->setMessageID(msg->getMessageID());
-  // send(reply->getPDUPointer(), reply->getPDULength());
-  // delete(reply);
+  send_confirmation(msg);
 }
 
 
@@ -160,4 +164,43 @@ void receive_messages() {
   }
 
   process_message(&coap_msg);
+}
+
+
+
+int next_message_id() {
+  int id = message_id_counter++;
+  return id;
+}
+
+int Message::send() {
+  CoapPDU msg;
+
+  // LOG
+  if (this->action == ACTION_LOG) {
+    msg.setType(CoapPDU::COAP_CONFIRMABLE);
+    msg.setCode(CoapPDU::COAP_POST);
+    msg.setURI("/log");
+  }
+
+  // Default settings
+  else {
+
+    msg.setType(CoapPDU::COAP_NON_CONFIRMABLE);
+    msg.setCode(CoapPDU::COAP_POST);
+  }
+
+
+
+  msg.setMessageID(next_message_id());
+  msg.setPayload(this->payload, this->payload_len);
+
+  return ::send(msg.getPDUPointer(), msg.getPDULength());
+}
+
+
+
+void remote_log(const char *data) {
+  Message msg(ACTION_LOG, data);
+  msg.send();
 }

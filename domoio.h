@@ -26,7 +26,7 @@ bool is_connected();
 void connect();
 void receive_messages();
 int send(const void* data, int size);
-
+bool register_device(String claim_code, String public_key);
 
 
 

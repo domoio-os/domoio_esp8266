@@ -1,7 +1,8 @@
+#include <Arduino.h>
 #include "storage.h"
 
-#define STG_CLAIM_CODE_START 0
-#define STG_CLAIM_CODE_LEN 32
+#define STG_DEVICE_ID_START 0
+#define STG_DEVICE_ID_LEN 36
 
 
 namespace Storage {
@@ -11,11 +12,12 @@ namespace Storage {
   }
 
   int read_eeprom(char *buffer, int start, int len) {
+    char c;
     for(int x=0; x < len; x++) {
       int i = x + start;
-      buffer[x] = EEPROM.read(i);
+      c = EEPROM.read(i);
+      buffer[x] = c;
     }
-    buffer[len] = '\0';
     return len;
   }
 
@@ -23,21 +25,23 @@ namespace Storage {
   bool  write_eeprom(const char *buffer, int start, int len) {
     for(int x=0; x < len; x++) {
       int i = x + start;
-      EEPROM.write(buffer[x], i);
+      EEPROM.write(i, buffer[x]);
     }
-
+    EEPROM.commit();
   }
 
-  int get_claim_code(char *buffer, int len) {
-    if (len < STG_CLAIM_CODE_LEN + 1) {
+  int get_device_id(char *buffer, int len) {
+    if (len < STG_DEVICE_ID_LEN + 1) {
       return -1;
     }
-    return read_eeprom(buffer, STG_CLAIM_CODE_START, STG_CLAIM_CODE_LEN);
+    read_eeprom(buffer, STG_DEVICE_ID_START, STG_DEVICE_ID_LEN);
+    buffer[len] = '\0';
+    return len;
   }
 
-  bool set_claim_code(const char *claim_code) {
-    int len = strlen(claim_code);
-    if (len > STG_CLAIM_CODE_LEN) return false;
-    return write_eeprom(claim_code, STG_CLAIM_CODE_START, len);
+  bool set_device_id(const char *device_id) {
+    int len = strlen(device_id);
+    if (len > STG_DEVICE_ID_LEN) return false;
+    return write_eeprom(device_id, STG_DEVICE_ID_START, len);
   }
 };

@@ -2,14 +2,17 @@
 #include "domoio.h"
 #include "cantcoap.h"
 #include <WiFiClientSecure.h>
+#include <ESP8266HTTPClient.h>
+#include "storage.h"
 
 #define URI_BUFFER_LENGTH 25
 
 #define BUFFER_SIZE 512
 
+// #define DOMOIO_URL "https://app.domoio.com"
+#define DOMOIO_URL "http://10.254.0.200:4000"
 
 byte buffer[BUFFER_SIZE];
-const char *hardware_id = "514e99d8-d2c0-4fc8-aa7d-db7cd1c7e688";
 bool session_started = false;
 
 WiFiClientSecure client;
@@ -58,8 +61,17 @@ int block_until_receive() {
 const char *expected = "HELLO";
 int expected_len = strlen(expected);
 
+
 bool handsake() {
-  send(hardware_id, strlen(hardware_id));
+  char device_id[37];
+  if (Storage::get_device_id(&device_id[0], 37) == -1) {
+    Serial.println("Error reading device id");
+    return false;
+  }
+  Serial.print("Device_id: ");
+  Serial.println(&device_id[0]);
+
+  send(&device_id[0], 36);
   int size = block_until_receive();
   // Serial.print("Received: ");
   // Serial.print(size);
@@ -203,4 +215,37 @@ int Message::send() {
 void remote_log(const char *data) {
   Message msg(ACTION_LOG, data);
   msg.send();
+}
+
+
+bool register_device(String claim_code, String public_key) {
+  HTTPClient http;
+  String url(DOMOIO_URL);
+  bool success = false;
+  url += "/api/register_device";
+  Serial.println(url);
+  http.begin(url);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+  String post_data("");
+  post_data += "claim_code=" + claim_code + "&public_key=" + public_key + "&hardware_id=" + String(ESP.getChipId());
+  int resp_code = http.POST(post_data);
+  if (resp_code > 0) {
+    String resp = http.getString();
+    char device_id[37];
+    sscanf(resp.c_str(), "{\"device_id\":\"%36s\"}", &device_id[0]);
+
+    Serial.println(&device_id[0]);
+
+    // Save the device_id
+    Storage::set_device_id(&device_id[0]);
+
+    success = true;
+  } else {
+    Serial.print("ERROR: ");
+    Serial.println(http.errorToString(resp_code));
+  }
+
+  http.end();
+  return success;
 }

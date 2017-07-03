@@ -7,8 +7,8 @@ namespace Storage {
 
   void begin();
 
-  int get_claim_code(char *buffer, int len);
-  bool set_claim_code(const char *claim_code);
+  int get_device_id(char *buffer, int len);
+  bool set_device_id(const char *device_id);
 
 };
 

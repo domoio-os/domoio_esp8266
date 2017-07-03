@@ -3,7 +3,10 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include "FS.h"
-#include "storage.h"
+
+extern "C" {
+#include "user_interface.h"
+}
 
 ESP8266WebServer *server = NULL;;
 
@@ -33,18 +36,24 @@ bool wait_for_wifi() {
   }
   return WiFi.status() == WL_CONNECTED;
 }
-void reconnect(const char *ssid, const char *password) {
+bool reconnect(const char *ssid, const char *password) {
   Serial.println(ssid);
   Serial.println(password);
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);
+
   WiFi.begin(ssid, password);
   if (wait_for_wifi()) {
+    wifi_station_dhcpc_start();
     Serial.println("Connected to new AP");
-    reset();
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    return true;
   } else {
     Serial.println("Error connecting to new AP");
     start_ap_mode();
+    return false;
   }
 }
 
@@ -123,11 +132,19 @@ void handle_submit() {
   buffer += "{\"ssid\":\"" + ssid + "\", \"status\":\"ok\"}";
   server->send(200, "application/json", buffer);
 
-  // Save the claim_code
-  Storage::set_claim_code(claim_code.c_str());
-
   delay(1000);
-  reconnect(ssid.c_str(), &pwd_buf[0]);
+  while (reconnect(ssid.c_str(), &pwd_buf[0]) != true) {
+    delay(500);
+  }
+
+  Serial.println("Registering device");
+
+  while(register_device(claim_code, get_public_key()) != true) {
+    delay(500);
+  }
+  Serial.println("Done");
+  reset();
+
 }
 
 

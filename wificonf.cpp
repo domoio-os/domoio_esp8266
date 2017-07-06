@@ -122,7 +122,7 @@ void handle_submit() {
   int pwd_len = encrypted_pwd.length();
   char pwd_buf[pwd_len];
 
-  if (decrypt(encrypted_pwd.c_str(), &pwd_buf[0], pwd_len) < 0) {
+  if (decrypt_hex(encrypted_pwd.c_str(), &pwd_buf[0], pwd_len) < 0) {
     Serial.println("Error decrypt");
     server->send(401, "application/json", "{\"error\": \"Error decrypting\"}");
     return;

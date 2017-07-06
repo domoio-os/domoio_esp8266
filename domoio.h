@@ -51,7 +51,7 @@ void serial_loop();
  * crypto
  */
 
-int decrypt(const char *src, char *out, int len);
-
+int decrypt_hex(const char *src, char *out, int len);
+int decrypt(const byte *src, byte *out, int len);
 
 #endif //DOMOIO_H

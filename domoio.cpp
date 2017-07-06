@@ -52,15 +52,17 @@ int receive() {
 
 
 int block_until_receive() {
-  int size;
-  while((size = receive()) == -1) {
+  int size = -1;
+  double start = millis();
+  while((size = receive()) == -1 && start + 5000 > millis()) {
     delay(250);
   }
   return size;
 }
+
+
 const char *expected = "HELLO";
 int expected_len = strlen(expected);
-
 
 bool handsake() {
   char device_id[37];
@@ -72,11 +74,22 @@ bool handsake() {
   Serial.println(&device_id[0]);
 
   send(&device_id[0], 36);
+
+  // Read the encryptd nounce
   int size = block_until_receive();
+
+
+  byte nounce_clean[size];
+  decrypt(&buffer[0], &nounce_clean[0], size);
+  send(&nounce_clean, 40);
   // Serial.print("Received: ");
   // Serial.print(size);
   // Serial.print(" => ");
   // Serial.println((char *) &buffer[0]);
+
+  // Read the encryptd nounce
+  size = block_until_receive();
+
 
   if (size != expected_len || strncmp(expected, (char *) &buffer[0], size) != 0) {
     Serial.println("BAD LOGIN");

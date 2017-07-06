@@ -35,7 +35,7 @@ int convert(const char *hex_str, unsigned char *byte_array, int byte_array_max) 
 }
 
 
-int decrypt(const char *src, char*out, int len) {
+int decrypt_hex(const char *src, char*out, int len) {
   int bin_len = len / 2;
   uint8_t encrypted[bin_len];
   int converted = convert(src, &encrypted[0], bin_len);
@@ -50,6 +50,20 @@ int decrypt(const char *src, char*out, int len) {
 
   int ret_value = RSA_decrypt(ctx, &encrypted[0], (uint8_t *) out, len, 1);
   Serial.println(&out[0]);
+  RSA_free(ctx);
+  return 1;
+}
+
+
+int decrypt(const byte *src, byte *out, int len) {
+  RSA_CTX *ctx = NULL;
+
+  if (init_rsa_context(&ctx) == -1) {
+    Serial.println("Error reading cert");
+    return -1;
+  }
+
+  int ret_value = RSA_decrypt(ctx, src, out, len, 1);
   RSA_free(ctx);
   return 1;
 }

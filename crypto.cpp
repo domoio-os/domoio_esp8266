@@ -11,7 +11,7 @@ int init_rsa_context(RSA_CTX **ctx) {
   File f = SPIFFS.open("/server.der", "r");
 
   if (!f) {
-    Serial.println("file open failed");
+    PRINTLN("file open failed");
     return -1;
   }
   int size = f.size();
@@ -44,12 +44,12 @@ int decrypt_hex(const char *src, char*out, int len) {
 
 
   if (init_rsa_context(&ctx) == -1) {
-    Serial.println("Error reading cert");
+    PRINTLN("Error reading cert");
     return -1;
   }
 
   int ret_value = RSA_decrypt(ctx, &encrypted[0], (uint8_t *) out, len, 1);
-  Serial.println(&out[0]);
+  PRINTLN(&out[0]);
   RSA_free(ctx);
   return 1;
 }
@@ -59,7 +59,7 @@ int decrypt(const byte *src, byte *out, int len) {
   RSA_CTX *ctx = NULL;
 
   if (init_rsa_context(&ctx) == -1) {
-    Serial.println("Error reading cert");
+    PRINTLN("Error reading cert");
     return -1;
   }
 

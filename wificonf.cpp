@@ -37,21 +37,21 @@ bool wait_for_wifi() {
   return WiFi.status() == WL_CONNECTED;
 }
 bool reconnect(const char *ssid, const char *password) {
-  Serial.println(ssid);
-  Serial.println(password);
+  PRINTLN(ssid);
+  PRINTLN(password);
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);
 
   WiFi.begin(ssid, password);
   if (wait_for_wifi()) {
     wifi_station_dhcpc_start();
-    Serial.println("Connected to new AP");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    PRINTLN("Connected to new AP");
+    PRINT("IP address: ");
+    PRINTLN(WiFi.localIP());
 
     return true;
   } else {
-    Serial.println("Error connecting to new AP");
+    PRINTLN("Error connecting to new AP");
     start_ap_mode();
     return false;
   }
@@ -64,7 +64,7 @@ String get_public_key(){
   File f = SPIFFS.open("/server.pub.der", "r");
 
   if (!f) {
-    Serial.println("file open failed");
+    PRINTLN("file open failed");
     return String("NULL");
   }
   int size = f.size();
@@ -114,7 +114,7 @@ void handle_submit() {
   //   debug += name + " = " + value + "\n";
   // }
 
-  // Serial.print(debug);
+  // PRINT(debug);
 
   String ssid = server->arg("ssid");
   String encrypted_pwd = server->arg("pwd");
@@ -123,7 +123,7 @@ void handle_submit() {
   char pwd_buf[pwd_len];
 
   if (decrypt_hex(encrypted_pwd.c_str(), &pwd_buf[0], pwd_len) < 0) {
-    Serial.println("Error decrypt");
+    PRINTLN("Error decrypt");
     server->send(401, "application/json", "{\"error\": \"Error decrypting\"}");
     return;
   }
@@ -137,12 +137,12 @@ void handle_submit() {
     delay(500);
   }
 
-  Serial.println("Registering device");
+  PRINTLN("Registering device");
 
   while(register_device(claim_code, get_public_key()) != true) {
     delay(500);
   }
-  Serial.println("Done");
+  PRINTLN("Done");
   reset();
 
 }
@@ -158,22 +158,22 @@ void run_config_server() {
   server->on("/config", HTTP_POST, handle_submit);
   server->onNotFound(handleNotFound);
 	server->begin();
-  Serial.println("Server started");
+  PRINTLN("Server started");
   while(true) {
     server->handleClient();
   }
 }
 
 void connect_wifi() {
-  Serial.println("Connecting");
+  PRINTLN("Connecting");
   WiFi.begin();
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
   }
 
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  PRINT("IP address: ");
+  PRINTLN(WiFi.localIP());
 }
 
 namespace WifiConf {

@@ -32,7 +32,7 @@ class HomeIM : public InputManager {
       if (!this->reset_mode && this->pressed_at + RESET_TIMEOUT < millis()) {
         this->reset_mode = true;
         digitalWrite(LED_BUILTIN, LOW);
-        // Serial.println("Reset mode on");
+        // PRINTLN("Reset mode on");
         remote_log("Reset mode on");
       }
       return;
@@ -52,14 +52,14 @@ class HomeIM : public InputManager {
 
  private:
   void press() {
-    Serial.println("pressed");
+    PRINTLN("pressed");
     this->pressed = true;
     remote_log("BTN pressed");
     this->pressed_at = millis();
   }
 
   void release() {
-    Serial.println("released");
+    PRINTLN("released");
     remote_log("BTN released");
     this->pressed = false;
     this->pressed_at = NULL;

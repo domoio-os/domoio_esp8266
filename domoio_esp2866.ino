@@ -32,7 +32,9 @@ reactduino::StateContainer state;
 HomeController home_controller(&state);
 
 void setup() {
+#ifdef SERIAL_LOG
   Serial.begin(115200);
+#endif
 
   WiFi.persistent(true);
   Storage::begin();
@@ -50,11 +52,9 @@ void loop() {
 
   if (!is_connected()) {
     connect();
-    delay(1000);
+    delay(250);
     return;
   }
 
   receive_messages();
-
-  // serial_loop();
 }

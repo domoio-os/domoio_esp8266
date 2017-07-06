@@ -39,7 +39,7 @@ int receive() {
 
   int size = size_buf[1] | size_buf[0] << 8;
   if (size > BUFFER_SIZE) {
-    Serial.println("ERROR: OVERFLOW");
+    PRINTLN("ERROR: OVERFLOW");
     return -1;
   }
   clear_buffer();
@@ -67,11 +67,11 @@ int expected_len = strlen(expected);
 bool handsake() {
   char device_id[37];
   if (Storage::get_device_id(&device_id[0], 37) == -1) {
-    Serial.println("Error reading device id");
+    PRINTLN("Error reading device id");
     return false;
   }
-  Serial.print("Device_id: ");
-  Serial.println(&device_id[0]);
+  PRINT("Device_id: ");
+  PRINTLN(&device_id[0]);
 
   send(&device_id[0], 36);
 
@@ -82,30 +82,30 @@ bool handsake() {
   byte nounce_clean[size];
   decrypt(&buffer[0], &nounce_clean[0], size);
   send(&nounce_clean, 40);
-  // Serial.print("Received: ");
-  // Serial.print(size);
-  // Serial.print(" => ");
-  // Serial.println((char *) &buffer[0]);
+  // PRINT("Received: ");
+  // PRINT(size);
+  // PRINT(" => ");
+  // PRINTLN((char *) &buffer[0]);
 
   // Read the encryptd nounce
   size = block_until_receive();
 
 
   if (size != expected_len || strncmp(expected, (char *) &buffer[0], size) != 0) {
-    Serial.println("BAD LOGIN");
+    PRINTLN("BAD LOGIN");
     return false;
   }
 
   session_started = true;
-  Serial.println("Session started");
+  PRINTLN("Session started");
 
   return true;
 }
 
 void connect() {
-  Serial.println("connecting");
+  PRINTLN("connecting");
   if (!client.connect(host, port)) {
-    Serial.println("connection failed");
+    PRINTLN("connection failed");
     return;
   }
 
@@ -142,22 +142,22 @@ void process_message(CoapPDU *msg) {
   char uri_buf[URI_BUFFER_LENGTH];
   int uri_size;
   msg->getURI(&uri_buf[0], URI_BUFFER_LENGTH, &uri_size);
-  Serial.print("URI: ");
-  Serial.println(uri_buf);
+  PRINT("URI: ");
+  PRINTLN(uri_buf);
 
 
   int payload_length = msg->getPayloadLength();
   uint8_t *payload = msg->getPayloadPointer();
-  Serial.print("Payload ");
-  Serial.println(payload_length);
+  PRINT("Payload ");
+  PRINTLN(payload_length);
 
   int port_id = buff2i(payload, 0);
   int value = buff2i(payload, 2);
-  Serial.print("Port: ");
-  Serial.println(port_id);
+  PRINT("Port: ");
+  PRINTLN(port_id);
 
-  Serial.print("Value: ");
-  Serial.println(value);
+  PRINT("Value: ");
+  PRINTLN(value);
 
   if (value == 1) {
     digitalWrite(LED_BUILTIN, LOW);
@@ -178,13 +178,13 @@ void receive_messages() {
     return;
   }
 
-  // Serial.print("Received: ");
-  // Serial.println(size);
+  // PRINT("Received: ");
+  // PRINTLN(size);
 
   CoapPDU coap_msg = CoapPDU(buffer, size);
 
   if (!coap_msg.validate()) {
-    Serial.print("Bad packet rc");
+    PRINT("Bad packet rc");
     return;
   }
 
@@ -236,7 +236,7 @@ bool register_device(String claim_code, String public_key) {
   String url(DOMOIO_URL);
   bool success = false;
   url += "/api/register_device";
-  Serial.println(url);
+  PRINTLN(url);
   http.begin(url);
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
@@ -248,15 +248,15 @@ bool register_device(String claim_code, String public_key) {
     char device_id[37];
     sscanf(resp.c_str(), "{\"device_id\":\"%36s\"}", &device_id[0]);
 
-    Serial.println(&device_id[0]);
+    PRINTLN(&device_id[0]);
 
     // Save the device_id
     Storage::set_device_id(&device_id[0]);
 
     success = true;
   } else {
-    Serial.print("ERROR: ");
-    Serial.println(http.errorToString(resp_code));
+    PRINT("ERROR: ");
+    PRINTLN(http.errorToString(resp_code));
   }
 
   http.end();

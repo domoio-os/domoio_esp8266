@@ -1,6 +1,22 @@
 #ifndef DOMOIO_H
 #define DOMOIO_H
 
+
+#define SERIAL_LOG
+#ifdef SERIAL_LOG
+
+#define PRINT(str) Serial.print(str)
+#define PRINTLN(str) Serial.println(str)
+
+#else
+
+#define PRINT(str) ((void)0)
+#define PRINTLN(str) ((void)0)
+
+#endif
+
+
+
 void delete_credentials();
 void reset();
 

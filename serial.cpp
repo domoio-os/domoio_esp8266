@@ -31,8 +31,8 @@ void serial_loop() {
   //   int received = Serial.readBytes( &read_buffer[0], read_size);
   //   read_buffer[read_size] = '\0';
 
-  //   Serial.print("Received: ");
-  //   Serial.println(&read_buffer[0]);
+  //   PRINT("Received: ");
+  //   PRINTLN(&read_buffer[0]);
 
 
   //   int size = read_size / 2;
@@ -40,9 +40,9 @@ void serial_loop() {
 
 
   //   if (decrypt(&read_buffer[0], &buffer[0], size) < 0) {
-  //     Serial.println("Error decrypt");
+  //     PRINTLN("Error decrypt");
   //   } else {
-  //     Serial.println((char*) &buffer[0]);
+  //     PRINTLN((char*) &buffer[0]);
   //   }
 
   // }

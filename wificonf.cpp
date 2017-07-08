@@ -3,6 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include "FS.h"
+#include "reactduino.h"
 
 extern "C" {
 #include "user_interface.h"

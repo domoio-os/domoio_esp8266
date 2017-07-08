@@ -8,6 +8,7 @@
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
 #include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
 
 #include "cantcoap.h"
 #include "domoio.h"
@@ -35,16 +36,18 @@ void setup() {
 #ifdef SERIAL_LOG
   Serial.begin(115200);
 #endif
+  PRINT("Starting ");
+  PRINTLN(WiFi.SSID());
 
-  WiFi.persistent(true);
   Storage::begin();
   delay(1000);
 
   reactduino::push_controller(&home_controller);
-  WifiConf::connect();
 
-  // pinMode(LED_BUILTIN, OUTPUT);
-  // digitalWrite(LED_BUILTIN, HIGH);
+  WiFi.persistent(true);
+  WifiConf::connect();
+  pinMode(12, OUTPUT);
+
 }
 
 void loop() {

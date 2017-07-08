@@ -6,7 +6,8 @@
 #include "domoio.h"
 #include "storage.h"
 
-#define STATE_BTN 2
+#define STATE_BTN 0
+
 #define RESET_TIMEOUT 5000
 using namespace reactduino;
 

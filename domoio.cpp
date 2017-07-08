@@ -3,11 +3,13 @@
 #include "cantcoap.h"
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
 #include "storage.h"
+
 
 #define URI_BUFFER_LENGTH 25
 
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 256
 
 // #define DOMOIO_URL "https://app.domoio.com"
 #define DOMOIO_URL "http://10.254.0.200:4000"
@@ -138,37 +140,70 @@ int send_confirmation(CoapPDU *msg) {
   return send(reply.getPDUPointer(), reply.getPDULength());
 }
 
+
+void ota_update() {
+  PRINT("Free heap: ");
+  PRINTLN(ESP.getFreeHeap());
+  t_httpUpdate_return ret = ESPhttpUpdate.update("http://10.254.0.200:4000/ota");
+  delay(1000);
+  switch(ret) {
+  case HTTP_UPDATE_FAILED:
+    //    Serial.println("HTTP_UPDATE_FAILD Error");
+    Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+    break;
+
+  case HTTP_UPDATE_NO_UPDATES:
+    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    break;
+
+  case HTTP_UPDATE_OK:
+    Serial.println("HTTP_UPDATE_OK");
+    break;
+  }
+
+  reset();
+}
+
+
 void process_message(CoapPDU *msg) {
   char uri_buf[URI_BUFFER_LENGTH];
   int uri_size;
   msg->getURI(&uri_buf[0], URI_BUFFER_LENGTH, &uri_size);
   PRINT("URI: ");
   PRINTLN(uri_buf);
+  if (strncmp(uri_buf, "/set", 4) == 0) {
+    int payload_length = msg->getPayloadLength();
+    uint8_t *payload = msg->getPayloadPointer();
+    PRINT("Payload ");
+    PRINTLN(payload_length);
 
+    int port_id = buff2i(payload, 0);
+    int value = buff2i(payload, 2);
+    PRINT("Port: ");
+    PRINTLN(port_id);
 
-  int payload_length = msg->getPayloadLength();
-  uint8_t *payload = msg->getPayloadPointer();
-  PRINT("Payload ");
-  PRINTLN(payload_length);
+    PRINT("Value: ");
+    PRINTLN(value);
 
-  int port_id = buff2i(payload, 0);
-  int value = buff2i(payload, 2);
-  PRINT("Port: ");
-  PRINTLN(port_id);
+    if (value == 1) {
+      digitalWrite(12, HIGH);
+    } else {
+      digitalWrite(12, LOW);
+    }
 
-  PRINT("Value: ");
-  PRINTLN(value);
+    // Send the response
+    send_confirmation(msg);
 
-  if (value == 1) {
-    digitalWrite(LED_BUILTIN, LOW);
-  } else {
-    digitalWrite(LED_BUILTIN, HIGH);
   }
 
-
-  // Send the response
-  send_confirmation(msg);
+  else if (strncmp(uri_buf, "/flash", 6) == 0) {
+    PRINTLN("Flashing device");
+    send_confirmation(msg);
+    delay(1000);
+    ota_update();
+  }
 }
+
 
 
 void receive_messages() {

@@ -57,6 +57,7 @@ int block_until_receive() {
   int size = -1;
   double start = millis();
   while((size = receive()) == -1 && start + 5000 > millis()) {
+    reactduino::loop();
     delay(250);
   }
   return size;

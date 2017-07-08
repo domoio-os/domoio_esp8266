@@ -33,7 +33,8 @@ void start_ap_mode() {
 bool wait_for_wifi() {
   double start = millis();
   while (WiFi.status() != WL_CONNECTED && start > (millis() - 10000)  ) {
-    delay(500);
+    reactduino::loop();
+    delay(250);
   }
   return WiFi.status() == WL_CONNECTED;
 }
@@ -149,9 +150,6 @@ void handle_submit() {
 }
 
 
-
-
-
 void run_config_server() {
   server = new ESP8266WebServer(80);
   server->on("/", handleRoot);
@@ -166,10 +164,11 @@ void run_config_server() {
 }
 
 void connect_wifi() {
-  PRINTLN("Connecting");
+  PRINTLN("Connecting WiFI");
   WiFi.begin();
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
+    reactduino::loop();
     delay(500);
   }
 

@@ -29,8 +29,7 @@ void reset() {
   delay(5000);
 }
 
-reactduino::StateContainer state;
-HomeController home_controller(&state);
+HomeController home_controller;
 
 void setup() {
 #ifdef SERIAL_LOG
@@ -40,14 +39,14 @@ void setup() {
   PRINTLN(WiFi.SSID());
 
   Storage::begin();
-  delay(1000);
 
   reactduino::push_controller(&home_controller);
 
   WiFi.persistent(true);
   WifiConf::connect();
-  pinMode(12, OUTPUT);
 
+
+  pinMode(12, OUTPUT);
 }
 
 void loop() {
@@ -55,7 +54,6 @@ void loop() {
 
   if (!is_connected()) {
     connect();
-    delay(250);
     return;
   }
 

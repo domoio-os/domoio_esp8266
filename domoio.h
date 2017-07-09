@@ -28,6 +28,11 @@ enum ActionType {
   ACTION_LOG
 };
 
+enum ReactAction {
+  REACT_CONNECTING_DOMOIO,
+  REACT_CONNECTED
+};
+
 class Message {
   ActionType action;
   byte *payload;

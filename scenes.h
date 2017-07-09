@@ -7,6 +7,7 @@
 #include "storage.h"
 
 #define STATE_BTN 0
+#define STATE_LED 13
 
 #define RESET_TIMEOUT 5000
 using namespace reactduino;
@@ -17,10 +18,9 @@ class HomeIM : public InputManager {
   bool reset_mode;
 
  public:
-  HomeIM(StateContainer *_state) : InputManager(_state) {}
+  HomeIM() : InputManager() {}
 
   void initialize() {
-    pinMode(STATE_BTN, INPUT_PULLUP);
     this->pressed = false;
     this->reset_mode = false;
   }
@@ -71,41 +71,101 @@ class HomeIM : public InputManager {
   }
 };
 
-class HomeView : public View {
-  bool led_state;
-public:
-  HomeView(StateContainer *_state) : View(_state) {}
-  void initialize() {
-    this->led_state = false;
-  }
-  void loop() {
 
+class Blink : public View {
+  bool led_state;
+  unsigned long previous_millis;
+  unsigned long current_millis;
+  const long interval;
+
+public:
+  Blink(long _interval) : interval(_interval), View() {}
+  Blink() : Blink(1000) {}
+
+  void initialize() {
+    this->previous_millis = 0;
+    this->turn_on();
+  }
+
+  void loop() {
+    current_millis = millis();
+
+    if (current_millis - previous_millis >= interval) {
+      previous_millis = current_millis;
+
+      if (led_state) this->turn_off();
+      else this->turn_on();
+    }
   }
 
 private:
   void turn_on() {
     this->led_state = true;
+    digitalWrite(STATE_LED, LOW);
   }
   void turn_off() {
     this->led_state = false;
+    digitalWrite(STATE_LED, HIGH);
   }
 };
 
+
+class LedOn : public View {
+public:
+  void initialize() {
+
+    digitalWrite(STATE_LED, LOW);
+  }
+};
+
+
+
 class HomeController : public Controller {
-  HomeView view;
+  View *view;
   HomeIM im;
 public:
-  HomeController(StateContainer *_state) : Controller(_state), view(_state), im(_state) {
+  HomeController() : Controller() {
+    this->view = new Blink(500);
+  }
 
+  ~HomeController() {
+    if (this->view != NULL) {
+      delete(this->view);
+    }
   }
   void initialize() {
+    pinMode(STATE_BTN, INPUT_PULLUP);
+    pinMode(STATE_LED, OUTPUT);
+
     this->im.initialize();
-    this->view.initialize();
+    this->view->initialize();
   }
 
   void loop() {
     this->im.loop();
-    this->view.loop();
+    this->view->loop();
+  }
+
+  void setView(View *v) {
+    if (this->view != NULL) {
+      delete(this->view);
+    }
+    this->view = v;
+    this->view->initialize();
+  }
+
+  void dispatch(int action, void *data) {
+
+    switch (action) {
+    case REACT_CONNECTED:
+      this->setView(new LedOn());
+      return;
+
+    case REACT_CONNECTING_DOMOIO:
+      this->setView(new Blink(250));
+      return;
+
+    }
   }
 };
 

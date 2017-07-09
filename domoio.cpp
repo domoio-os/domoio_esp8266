@@ -5,7 +5,7 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include "storage.h"
-
+#include "reactduino.h"
 
 #define URI_BUFFER_LENGTH 25
 
@@ -58,7 +58,6 @@ int block_until_receive() {
   double start = millis();
   while((size = receive()) == -1 && start + 5000 > millis()) {
     reactduino::loop();
-    delay(250);
   }
   return size;
 }
@@ -106,13 +105,15 @@ bool handsake() {
 }
 
 void connect() {
-  PRINTLN("connecting");
+  reactduino::dispatch(REACT_CONNECTING_DOMOIO);
+  PRINTLN("connecting to Domoio");
   if (!client.connect(host, port)) {
     PRINTLN("connection failed");
     return;
   }
 
   handsake();
+  reactduino::dispatch(REACT_CONNECTED);
 }
 
 

@@ -23,4 +23,9 @@ namespace reactduino {
     Controller *c = queue[current_index];
     c->loop();
   }
+
+  void dispatch(int action, void *data) {
+    Controller *c = current();
+    c->dispatch(action, data);
+  }
 }

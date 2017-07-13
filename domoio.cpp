@@ -144,9 +144,10 @@ int send_confirmation(CoapPDU *msg) {
 
 
 void ota_update() {
-  PRINT("Free heap: ");
-  PRINTLN(ESP.getFreeHeap());
-  t_httpUpdate_return ret = ESPhttpUpdate.update("http://10.254.0.200:4000/ota");
+  reactduino::dispatch(REACT_FLASHING);
+  String url = String(DOMOIO_URL) + "/ota";
+
+  t_httpUpdate_return ret = ESPhttpUpdate.update(url);
   delay(1000);
   switch(ret) {
   case HTTP_UPDATE_FAILED:

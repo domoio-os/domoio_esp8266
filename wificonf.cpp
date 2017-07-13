@@ -38,6 +38,7 @@ bool wait_for_wifi() {
   }
   return WiFi.status() == WL_CONNECTED;
 }
+
 bool reconnect(const char *ssid, const char *password) {
   PRINTLN(ssid);
   PRINTLN(password);
@@ -108,16 +109,6 @@ void handle_info() {
 
 
 void handle_submit() {
-  // String debug = "vars: \n";
-  // int count = server->args();
-  // for (int i=0; i < count; i++) {
-  //   String name = server->argName(i);
-  //   String value = server->arg(i);
-  //   debug += name + " = " + value + "\n";
-  // }
-
-  // PRINT(debug);
-
   String ssid = server->arg("ssid");
   String encrypted_pwd = server->arg("pwd");
   String claim_code = server->arg("claim_code");
@@ -144,6 +135,13 @@ void handle_submit() {
   while(register_device(claim_code, get_public_key()) != true) {
     delay(500);
   }
+
+  // Save wifi config
+  WifiConfig wifi_config;
+  wifi_config.set_ssid(ssid.c_str());
+  wifi_config.set_password(&pwd_buf[0]);
+  wifi_config.save();
+
   PRINTLN("Done");
   reset();
 
@@ -158,14 +156,19 @@ void run_config_server() {
   server->onNotFound(handleNotFound);
 	server->begin();
   PRINTLN("Server started");
+  reactduino::dispatch(REACT_AP_SERVER);
   while(true) {
     server->handleClient();
   }
 }
 
-void connect_wifi() {
+void connect_to_ap() {
+  WifiConfig wifi_config;
+  wifi_config.load();
+  reactduino::dispatch(REACT_CONNECTING_WIFI);
   PRINTLN("Connecting WiFI");
-  WiFi.begin();
+  Serial.printf("SSID: %s PWD: %s\n", wifi_config.get_ssid(), wifi_config.get_password());
+  WiFi.begin(wifi_config.get_ssid(), wifi_config.get_password());
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     reactduino::loop();
@@ -176,18 +179,12 @@ void connect_wifi() {
   PRINTLN(WiFi.localIP());
 }
 
-namespace WifiConf {
-  void connect() {
-    if (WiFi.SSID().length() == 0) {
-      start_ap_mode();
-      run_config_server();
-    } else {
-      connect_wifi();
-    }
-  }
-  void reset_config() {
-    WiFi.disconnect(true);
-  }
 
-
+void connect_wifi() {
+  if (WifiConfig::is_configured()) {
+    connect_to_ap();
+  } else {
+    start_ap_mode();
+    run_config_server();
+  }
 }

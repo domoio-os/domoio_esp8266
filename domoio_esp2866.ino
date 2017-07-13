@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <EEPROM.h>
+#include "FS.h"
 #include <ESP8266WiFi.h>
-
+#include <Ticker.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoOTA.h>
 
@@ -19,7 +20,7 @@
 
 
 void delete_credentials() {
-  WifiConf::reset_config();
+  WifiConfig::reset();
   reset();
 }
 
@@ -35,15 +36,12 @@ void setup() {
 #ifdef SERIAL_LOG
   Serial.begin(115200);
 #endif
-  PRINT("Starting ");
-  PRINTLN(WiFi.SSID());
-
   Storage::begin();
 
   reactduino::push_controller(&home_controller);
 
-  WiFi.persistent(true);
-  WifiConf::connect();
+  WiFi.persistent(false);
+  connect_wifi();
 
 
   pinMode(12, OUTPUT);
@@ -53,6 +51,7 @@ void loop() {
   reactduino::loop();
 
   if (!is_connected()) {
+    delay(1000);
     connect();
     return;
   }

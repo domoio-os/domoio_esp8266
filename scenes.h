@@ -1,7 +1,9 @@
 #ifndef SCENES_H
 #define SCENES_H
 
+
 #include <Arduino.h>
+#include <Ticker.h>
 #include "reactduino.h"
 #include "domoio.h"
 #include "storage.h"
@@ -11,6 +13,17 @@
 
 #define RESET_TIMEOUT 5000
 using namespace reactduino;
+
+
+
+
+namespace led {
+  void blink();
+  void turn_on();
+  void turn_off();
+}
+
+Ticker flipper;
 
 class HomeIM : public InputManager {
   bool pressed;
@@ -33,8 +46,8 @@ class HomeIM : public InputManager {
       if (!this->reset_mode && this->pressed_at + RESET_TIMEOUT < millis()) {
         this->reset_mode = true;
         digitalWrite(LED_BUILTIN, LOW);
-        // PRINTLN("Reset mode on");
-        remote_log("Reset mode on");
+        PRINTLN("Reset mode on");
+        reactduino::dispatch(REACT_AP_RESET_WIFI_CONFIG);
       }
       return;
     }
@@ -72,97 +85,51 @@ class HomeIM : public InputManager {
 };
 
 
-class Blink : public View {
-  bool led_state;
-  unsigned long previous_millis;
-  unsigned long current_millis;
-  const long interval;
-
-public:
-  Blink(long _interval) : interval(_interval), View() {}
-  Blink() : Blink(1000) {}
-
-  void initialize() {
-    this->previous_millis = 0;
-    this->turn_on();
-  }
-
-  void loop() {
-    current_millis = millis();
-
-    if (current_millis - previous_millis >= interval) {
-      previous_millis = current_millis;
-
-      if (led_state) this->turn_off();
-      else this->turn_on();
-    }
-  }
-
-private:
-  void turn_on() {
-    this->led_state = true;
-    digitalWrite(STATE_LED, LOW);
-  }
-  void turn_off() {
-    this->led_state = false;
-    digitalWrite(STATE_LED, HIGH);
-  }
-};
-
-
-class LedOn : public View {
-public:
-  void initialize() {
-
-    digitalWrite(STATE_LED, LOW);
-  }
-};
-
-
 
 class HomeController : public Controller {
-  View *view;
   HomeIM im;
+  int current_action;
+
 public:
   HomeController() : Controller() {
-    this->view = new Blink(500);
+    this->current_action = -1;
   }
 
   ~HomeController() {
-    if (this->view != NULL) {
-      delete(this->view);
-    }
   }
   void initialize() {
     pinMode(STATE_BTN, INPUT_PULLUP);
     pinMode(STATE_LED, OUTPUT);
 
     this->im.initialize();
-    this->view->initialize();
   }
 
   void loop() {
     this->im.loop();
-    this->view->loop();
-  }
-
-  void setView(View *v) {
-    if (this->view != NULL) {
-      delete(this->view);
-    }
-    this->view = v;
-    this->view->initialize();
   }
 
   void dispatch(int action, void *data) {
+    if (action == this->current_action) return;
 
     switch (action) {
-    case REACT_CONNECTED:
-      this->setView(new LedOn());
+    case REACT_CONNECTING_WIFI:
+      flipper.detach();
+      flipper.attach(0.3, led::blink);
       return;
 
     case REACT_CONNECTING_DOMOIO:
-      this->setView(new Blink(250));
+    case REACT_FLASHING:
+    case REACT_AP_RESET_WIFI_CONFIG:
+      flipper.detach();
+      flipper.attach(0.1, led::blink);
+      return;
+    case REACT_CONNECTED:
+      flipper.detach();
+      led::turn_on();
+      return;
+    case REACT_AP_SERVER:
+      flipper.detach();
+      flipper.attach(1, led::blink);
       return;
 
     }

@@ -11,16 +11,13 @@
 
 #define BUFFER_SIZE 256
 
-// #define DOMOIO_URL "https://app.domoio.com"
-#define DOMOIO_URL "http://10.254.0.200:4000"
+DomoioConfig domoio_config;
 
 byte buffer[BUFFER_SIZE];
 bool session_started = false;
 
 WiFiClientSecure client;
 
-const char* host = "10.254.0.200";
-const int port = 1234;
 
 int message_id_counter = 0;
 
@@ -107,7 +104,7 @@ bool handsake() {
 void connect() {
   reactduino::dispatch(REACT_CONNECTING_DOMOIO);
   PRINTLN("connecting to Domoio");
-  if (!client.connect(host, port)) {
+  if (!client.connect(domoio_config.host.c_str(), domoio_config.port)) {
     PRINTLN("connection failed");
     return;
   }
@@ -145,7 +142,13 @@ int send_confirmation(CoapPDU *msg) {
 
 void ota_update() {
   reactduino::dispatch(REACT_FLASHING);
-  String url = String(DOMOIO_URL) + "/ota";
+  char device_id[37];
+  if (Storage::get_device_id(&device_id[0], 37) == -1) {
+    PRINTLN("Error reading device id");
+    return;
+  }
+
+  String url = domoio_config.api_url + "/ota?device_id=" + String(&device_id[0]);
 
   t_httpUpdate_return ret = ESPhttpUpdate.update(url);
   delay(1000);
@@ -262,7 +265,6 @@ int Message::send() {
 }
 
 
-
 void remote_log(const char *data) {
   Message msg(ACTION_LOG, data);
   msg.send();
@@ -271,15 +273,32 @@ void remote_log(const char *data) {
 
 bool register_device(String claim_code, String public_key) {
   HTTPClient http;
-  String url(DOMOIO_URL);
+  String url = domoio_config.api_url + "/api/register_device";
   bool success = false;
-  url += "/api/register_device";
   PRINTLN(url);
-  http.begin(url);
+  bool begin_success;
+  if (domoio_config.ssl_api) {
+    begin_success = http.begin(url, domoio_config.api_fingerprint);
+  } else {
+    begin_success = http.begin(url);
+  }
+  if (!begin_success ) {
+    PRINT("Error connecting to domoio ");
+    return false;
+  }
+
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
   String post_data("");
-  post_data += "claim_code=" + claim_code + "&public_key=" + public_key + "&hardware_id=" + String(ESP.getChipId());
+  post_data += "claim_code=" + claim_code +
+    "&device[type]=esp8266" +
+    "&device[public_key]=" + public_key +
+    "&device[hardware_id]=" + String(ESP.getChipId());
+
+#ifdef PRODUCT_VERSION
+  post_data += "&device[product_version]=" + String(PRODUCT_VERSION);
+#endif
+
   int resp_code = http.POST(post_data);
   if (resp_code > 0) {
     String resp = http.getString();

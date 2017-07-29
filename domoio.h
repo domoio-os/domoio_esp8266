@@ -1,12 +1,19 @@
 #ifndef DOMOIO_H
 #define DOMOIO_H
 
+
+#include "customizations.h"
+
 #include "FS.h"
 
+// #define DEV_ENV
 #define SERIAL_LOG
+
+
+
 #ifdef SERIAL_LOG
 
-#define PRINT(str) Serial.print(str)
+#define PRINT(__VA_ARGS__) Serial.printf(__VA_ARGS__)
 #define PRINTLN(str) Serial.println(str)
 
 #else
@@ -79,6 +86,7 @@ void serial_loop();
 
 int decrypt_hex(const char *src, char *out, int len);
 int decrypt(const byte *src, byte *out, int len);
+String get_public_key();
 
 /*
  * config
@@ -137,4 +145,30 @@ public:
     strncpy(&this->password[0], password, 64);
   }
 };
+
+class DomoioConfig {
+ public:
+  String api_url;
+
+  String api_fingerprint;
+  bool ssl_api;
+  String host;
+  int port;
+
+  DomoioConfig() {
+#ifdef DEV_ENV
+    this->api_url = "http://10.254.0.200:4000";
+    this->ssl_api = false;
+    this->host = "10.254.0.200";
+    this->port = 1234;
+#else
+    this->api_url = "https://app.domoio.com";
+    this->ssl_api = true;
+    this->api_fingerprint = "D7 79 01 81 F9 D4 53 17 D5 A9 5A EB 0D 78 C9 2B 7A E1 43 7F";
+    this->host = "app.domoio.com";
+    this->port = 5685;
+#endif
+  }
+};
+
 #endif //DOMOIO_H

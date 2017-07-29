@@ -1,3 +1,8 @@
+// #define DEBUG_ESP_PORT Serial.printf
+// #define DEBUG_ESP_HTTP_CLIENT
+// #define DEBUG_SSL
+// #define DEBUGV
+
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "FS.h"
@@ -35,14 +40,13 @@ HomeController home_controller;
 void setup() {
 #ifdef SERIAL_LOG
   Serial.begin(115200);
+  // Serial.setDebugOutput(true);
 #endif
   Storage::begin();
-
   reactduino::push_controller(&home_controller);
 
   WiFi.persistent(false);
   connect_wifi();
-
 
   pinMode(12, OUTPUT);
 }

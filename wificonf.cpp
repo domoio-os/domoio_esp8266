@@ -48,6 +48,7 @@ bool reconnect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
   if (wait_for_wifi()) {
     wifi_station_dhcpc_start();
+    delay(3000);
     PRINTLN("Connected to new AP");
     PRINT("IP address: ");
     PRINTLN(WiFi.localIP());
@@ -58,34 +59,6 @@ bool reconnect(const char *ssid, const char *password) {
     start_ap_mode();
     return false;
   }
-}
-
-
-
-String get_public_key(){
-  SPIFFS.begin();
-  File f = SPIFFS.open("/server.pub.der", "r");
-
-  if (!f) {
-    PRINTLN("file open failed");
-    return String("NULL");
-  }
-  int size = f.size();
-
-  int string_len = (size * 2) + 1;
-  char buffer[string_len];
-
-
-
-  for (int i=0; i < size; i++) {
-    sprintf(&buffer[2 *i], "%02X", f.read());
-  }
-  buffer[string_len] = '\0';
-
-  f.close();
-  SPIFFS.end();
-  return String(buffer);
-
 }
 
 void handle_info() {
@@ -126,6 +99,7 @@ void handle_submit() {
   server->send(200, "application/json", buffer);
 
   delay(1000);
+
   while (reconnect(ssid.c_str(), &pwd_buf[0]) != true) {
     delay(500);
   }

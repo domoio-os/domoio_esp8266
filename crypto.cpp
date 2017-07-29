@@ -5,6 +5,32 @@
 #include "ssl/crypto_misc.h"
 #include "crypto/crypto.h"
 
+String get_public_key(){
+  SPIFFS.begin();
+  File f = SPIFFS.open("/server.pub.der", "r");
+
+  if (!f) {
+    PRINTLN("file open failed");
+    return String("NULL");
+  }
+  int size = f.size();
+
+  int string_len = (size * 2) + 1;
+  char buffer[string_len];
+
+
+
+  for (int i=0; i < size; i++) {
+    sprintf(&buffer[2 *i], "%02X", f.read());
+  }
+  buffer[string_len] = '\0';
+
+  f.close();
+  SPIFFS.end();
+  return String(buffer);
+
+}
+
 
 int init_rsa_context(RSA_CTX **ctx) {
   SPIFFS.begin();

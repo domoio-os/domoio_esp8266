@@ -114,14 +114,18 @@ public:
     switch (action) {
     case REACT_CONNECTING_WIFI:
       flipper.detach();
-      flipper.attach(0.3, led::blink);
+      flipper.attach(0.4, led::blink);
       return;
 
     case REACT_CONNECTING_DOMOIO:
+      flipper.detach();
+      flipper.attach(0.2, led::blink);
+      return;
+
     case REACT_FLASHING:
     case REACT_AP_RESET_WIFI_CONFIG:
       flipper.detach();
-      flipper.attach(0.1, led::blink);
+      flipper.attach(0.05, led::blink);
       return;
     case REACT_CONNECTED:
       flipper.detach();

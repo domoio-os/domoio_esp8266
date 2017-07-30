@@ -312,19 +312,28 @@ bool register_device(String claim_code, String public_key) {
   if (resp_code > 0) {
     String resp = http.getString();
     char device_id[37];
-    sscanf(resp.c_str(), "{\"device_id\":\"%36s\"}", &device_id[0]);
+    PRINT("Received: %s\n", resp.c_str());
 
-    PRINTLN(&device_id[0]);
+    if(resp.startsWith("{\"errors\":")) {
+      PRINT("Error registering device");
+      success = false;
+      goto error;
+    }
 
-    // Save the device_id
-    Storage::set_device_id(&device_id[0]);
+    if (sscanf(resp.c_str(), "{\"device_id\":\"%36s\"}", &device_id[0]) > 0 ) {
+      PRINT("Received device_id: %s", &device_id[0]);
 
-    success = true;
+      // Save the device_id
+      Storage::set_device_id(&device_id[0]);
+      success = true;
+    }
+
   } else {
-    PRINT("ERROR: ");
-    PRINTLN(http.errorToString(resp_code));
+    PRINT("ERROR: %s", http.errorToString(resp_code).c_str());
+    success = false;
   }
 
+ error:
   http.end();
   return success;
 }

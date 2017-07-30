@@ -143,14 +143,23 @@ int send_confirmation(CoapPDU *msg) {
 void ota_update() {
   reactduino::dispatch(REACT_FLASHING);
   char device_id[37];
+
   if (Storage::get_device_id(&device_id[0], 37) == -1) {
     PRINTLN("Error reading device id");
     return;
   }
+  device_id[36] = '\0';
 
   String url = domoio_config.api_url + "/ota?device_id=" + String(&device_id[0]);
+  PRINT("URL: %s", url.c_str());
 
-  t_httpUpdate_return ret = ESPhttpUpdate.update(url);
+  t_httpUpdate_return ret;
+  if (domoio_config.ssl_api) {
+    ret = ESPhttpUpdate.update(url, "", domoio_config.api_fingerprint);
+  } else {
+    ret = ESPhttpUpdate.update(url);
+  }
+
   delay(1000);
   switch(ret) {
   case HTTP_UPDATE_FAILED:

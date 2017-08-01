@@ -23,7 +23,6 @@
 #include "reactduino.h"
 #include "scenes.h"
 
-
 void delete_credentials() {
   WifiConfig::reset();
   reset();
@@ -61,4 +60,10 @@ void loop() {
   }
 
   receive_messages();
+
+  if (is_ota_requested()) {
+    disconnect();
+    ota_update();
+  }
+
 }

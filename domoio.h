@@ -6,19 +6,15 @@
 
 #include "FS.h"
 
-// #define DEV_ENV
-#define SERIAL_LOG
-
-
 
 #ifdef SERIAL_LOG
 
-#define PRINT(__VA_ARGS__) Serial.printf(__VA_ARGS__)
+#define PRINT(...) Serial.printf(__VA_ARGS__)
 #define PRINTLN(str) Serial.println(str)
 
 #else
 
-#define PRINT(str) ((void)0)
+#define PRINT(...) ((void)0)
 #define PRINTLN(str) ((void)0)
 
 #endif
@@ -57,10 +53,12 @@ public:
 
 bool is_connected();
 void connect();
+void disconnect();
 void receive_messages();
 int send(const void* data, int size);
 bool register_device(String claim_code, String public_key);
-
+bool is_ota_requested();
+void ota_update();
 
 
 void remote_log(const char* msg);

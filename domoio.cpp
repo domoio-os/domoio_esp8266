@@ -16,8 +16,11 @@ DomoioConfig domoio_config;
 byte buffer[BUFFER_SIZE];
 bool session_started = false;
 
-WiFiClientSecure client;
+WiFiClientSecure *client;
 
+bool ota_requested = false;
+
+bool is_ota_requested() { return ota_requested; }
 
 int message_id_counter = 0;
 
@@ -26,15 +29,17 @@ void clear_buffer() {
 }
 
 bool is_connected() {
-  return client.connected();
+  return client && client->connected();
 }
 
 int receive() {
-  if (!client.available()) return -1;
+  if (!client) return -1;
+
+  if (!client->available()) return -1;
 
   int size_buf[2];
-  size_buf[0] = client.read();
-  size_buf[1] = client.read();
+  size_buf[0] = client->read();
+  size_buf[1] = client->read();
 
   int size = size_buf[1] | size_buf[0] << 8;
   if (size > BUFFER_SIZE) {
@@ -43,7 +48,7 @@ int receive() {
   }
   clear_buffer();
   for (int i=0; i < size; i++) {
-    buffer[i] = client.read();
+    buffer[i] = client->read();
   }
 
   return size;
@@ -104,7 +109,8 @@ bool handsake() {
 void connect() {
   reactduino::dispatch(REACT_CONNECTING_DOMOIO);
   PRINTLN("connecting to Domoio");
-  if (!client.connect(domoio_config.host.c_str(), domoio_config.port)) {
+  client = new WiFiClientSecure();
+  if (!client->connect(domoio_config.host.c_str(), domoio_config.port)) {
     PRINTLN("connection failed");
     return;
   }
@@ -113,11 +119,16 @@ void connect() {
   reactduino::dispatch(REACT_CONNECTED);
 }
 
-
+void disconnect() {
+  if (!client) return;
+  client->stop();
+  delete(client);
+  client = NULL;
+}
 
 
 int send(const void* data, int size) {
-
+  if (!client) return -1;
   int packet_size = size + 2;
   byte buffer[packet_size];
 
@@ -126,7 +137,7 @@ int send(const void* data, int size) {
 
   memcpy(&buffer[2], data, size);
 
-  return client.write(&buffer[0], packet_size);
+  return client->write(&buffer[0], packet_size);
 }
 
 int send_confirmation(CoapPDU *msg) {
@@ -206,17 +217,19 @@ void process_message(CoapPDU *msg) {
       digitalWrite(12, LOW);
     }
 
-    // Send the response
     send_confirmation(msg);
-
   }
 
   else if (strncmp(uri_buf, "/flash", 6) == 0) {
     PRINTLN("Flashing device");
     send_confirmation(msg);
     delay(1000);
-    ota_update();
+    ota_requested = true;
   }
+  else if (strncmp(uri_buf, "/ping", 5) == 0) {
+    send_confirmation(msg);
+  }
+
 }
 
 

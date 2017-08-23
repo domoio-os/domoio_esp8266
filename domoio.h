@@ -19,7 +19,7 @@
 
 #endif
 
-
+#define NETWORK_TIMEOUT 15000
 
 void delete_credentials();
 void reset();
@@ -58,6 +58,7 @@ void receive_messages();
 int send(const void* data, int size);
 bool register_device(String claim_code, String public_key);
 bool is_ota_requested();
+bool is_reconnect_requested();
 void ota_update();
 
 
@@ -115,7 +116,6 @@ public:
     file.write((uint8_t*) &password[0], 64);
     file.close();
     SPIFFS.end();
-    Serial.printf("SSID: %s PWD: %s\n", get_ssid(), get_password());
     return true;
   }
 

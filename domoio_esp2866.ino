@@ -52,6 +52,9 @@ void setup() {
 
 void loop() {
   reactduino::loop();
+  if (is_reconnect_requested()) {
+    disconnect();
+  }
 
   if (!is_connected()) {
     delay(1000);
@@ -65,5 +68,4 @@ void loop() {
     disconnect();
     ota_update();
   }
-
 }

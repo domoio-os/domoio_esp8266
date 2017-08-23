@@ -141,16 +141,12 @@ void connect_to_ap() {
   wifi_config.load();
   reactduino::dispatch(REACT_CONNECTING_WIFI);
   PRINTLN("Connecting WiFI");
-  Serial.printf("SSID: %s PWD: %s\n", wifi_config.get_ssid(), wifi_config.get_password());
   WiFi.begin(wifi_config.get_ssid(), wifi_config.get_password());
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     reactduino::loop();
     delay(500);
   }
-
-  PRINT("IP address: ");
-  PRINTLN(WiFi.localIP());
 }
 
 

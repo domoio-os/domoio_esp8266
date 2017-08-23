@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Ticker.h>
 #include "domoio.h"
 #include "cantcoap.h"
 #include <WiFiClientSecure.h>
@@ -19,10 +20,22 @@ bool session_started = false;
 WiFiClientSecure *client;
 
 bool ota_requested = false;
+bool reconnect_requested = false;
 
 bool is_ota_requested() { return ota_requested; }
+bool is_reconnect_requested() { return reconnect_requested; }
 
 int message_id_counter = 0;
+
+double last_seen_at;
+
+Ticker ping_ticker;
+
+int next_message_id() {
+  int id = message_id_counter++;
+  return id;
+}
+
 
 void clear_buffer() {
   memset(buffer, 0, BUFFER_SIZE);
@@ -36,6 +49,7 @@ int receive() {
   if (!client) return -1;
 
   if (!client->available()) return -1;
+  last_seen_at = millis();
 
   int size_buf[2];
   size_buf[0] = client->read();
@@ -69,15 +83,19 @@ const char *expected = "HELLO";
 int expected_len = strlen(expected);
 
 bool handsake() {
-  char device_id[37];
-  if (Storage::get_device_id(&device_id[0], 37) == -1) {
+  int version_len = strlen(FIRMWARE_VERSION);
+  int hello_len = 36 + version_len;
+  char hello_buf[hello_len];
+  if (Storage::get_device_id(&hello_buf[0], 37) == -1) {
     PRINTLN("Error reading device id");
     return false;
   }
-  PRINT("Device_id: ");
-  PRINTLN(&device_id[0]);
 
-  send(&device_id[0], 36);
+  strncpy(&hello_buf[36], FIRMWARE_VERSION, version_len);
+
+  PRINT("hello: %s", &hello_buf[0]);
+
+  send(&hello_buf[0], hello_len);
 
   // Read the encryptd nounce
   int size = block_until_receive();
@@ -102,29 +120,10 @@ bool handsake() {
 
   session_started = true;
   PRINTLN("Session started");
-
+  last_seen_at = millis();
   return true;
 }
 
-void connect() {
-  reactduino::dispatch(REACT_CONNECTING_DOMOIO);
-  PRINTLN("connecting to Domoio");
-  client = new WiFiClientSecure();
-  if (!client->connect(domoio_config.host.c_str(), domoio_config.port)) {
-    PRINTLN("connection failed");
-    return;
-  }
-
-  handsake();
-  reactduino::dispatch(REACT_CONNECTED);
-}
-
-void disconnect() {
-  if (!client) return;
-  client->stop();
-  delete(client);
-  client = NULL;
-}
 
 
 int send(const void* data, int size) {
@@ -151,6 +150,62 @@ int send_confirmation(CoapPDU *msg) {
 }
 
 
+void ping() {
+  // Check the timeout
+  double current_time = millis();
+  if ((current_time - last_seen_at) > NETWORK_TIMEOUT) {
+    reconnect_requested = true;
+    return;
+  }
+
+
+  CoapPDU ping_pk;
+	ping_pk.setType(CoapPDU::COAP_CONFIRMABLE);
+  ping_pk.setCode(CoapPDU::COAP_GET);
+  ping_pk.setURI("/ping");
+  ping_pk.setMessageID(next_message_id());
+  send(ping_pk.getPDUPointer(), ping_pk.getPDULength());
+}
+
+void start_ping() {
+  ping_ticker.attach(10, ping);
+}
+
+void stop_ping() {
+  ping_ticker.detach();
+}
+
+
+void connect() {
+  reactduino::dispatch(REACT_CONNECTING_DOMOIO);
+  PRINTLN("connecting to Domoio");
+  client = new WiFiClientSecure();
+  if (!client->connect(domoio_config.host.c_str(), domoio_config.port)) {
+    PRINTLN("connection failed");
+    return;
+  }
+
+  if (handsake()) {
+    reactduino::dispatch(REACT_CONNECTED);
+    start_ping();
+  }
+}
+
+void disconnect() {
+  if (!client) return;
+  stop_ping();
+  reconnect_requested = false;
+  client->stop();
+  delete(client);
+  client = NULL;
+}
+
+
+void remote_log(const char *data) {
+  Message msg(ACTION_LOG, data);
+  msg.send();
+}
+
 void ota_update() {
   reactduino::dispatch(REACT_FLASHING);
   char device_id[37];
@@ -174,16 +229,16 @@ void ota_update() {
   delay(1000);
   switch(ret) {
   case HTTP_UPDATE_FAILED:
-    //    Serial.println("HTTP_UPDATE_FAILD Error");
-    Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+    //   ! Serial.println("HTTP_UPDATE_FAILD Error");
+    PRINT("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
     break;
 
   case HTTP_UPDATE_NO_UPDATES:
-    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    PRINTLN("HTTP_UPDATE_NO_UPDATES");
     break;
 
   case HTTP_UPDATE_OK:
-    Serial.println("HTTP_UPDATE_OK");
+    PRINTLN("HTTP_UPDATE_OK");
     break;
   }
 
@@ -256,10 +311,6 @@ void receive_messages() {
 
 
 
-int next_message_id() {
-  int id = message_id_counter++;
-  return id;
-}
 
 int Message::send() {
   CoapPDU msg;
@@ -284,12 +335,6 @@ int Message::send() {
   msg.setPayload(this->payload, this->payload_len);
 
   return ::send(msg.getPDUPointer(), msg.getPDULength());
-}
-
-
-void remote_log(const char *data) {
-  Message msg(ACTION_LOG, data);
-  msg.send();
 }
 
 
@@ -320,30 +365,40 @@ bool register_device(String claim_code, String public_key) {
 #ifdef PRODUCT_VERSION
   post_data += "&device[product_version]=" + String(PRODUCT_VERSION);
 #endif
+#ifdef FIRMWARE_VERSION
+  post_data += "&device[firmware_version]=" + String(FIRMWARE_VERSION);
+#endif
 
   int resp_code = http.POST(post_data);
   if (resp_code > 0) {
     String resp = http.getString();
-    char device_id[37];
-    PRINT("Received: %s\n", resp.c_str());
+    char received_device_id[37];
+    // PRINT("Received: %s\n", resp.c_str());
 
     if(resp.startsWith("{\"errors\":")) {
       PRINT("Error registering device");
-      success = false;
       goto error;
     }
 
-    if (sscanf(resp.c_str(), "{\"device_id\":\"%36s\"}", &device_id[0]) > 0 ) {
-      PRINT("Received device_id: %s", &device_id[0]);
+    if (sscanf(resp.c_str(), "{\"device_id\":\"%36s\"}", &received_device_id[0]) > 0 ) {
+      PRINT("Received device_id: %s", &received_device_id[0]);
 
-      // Save the device_id
-      Storage::set_device_id(&device_id[0]);
+      char device_id[37];
+      if (Storage::get_device_id(&device_id[0], 37) == -1) {
+        PRINTLN("Error reading device id");
+        goto error;
+      }
+
       success = true;
+
+      if (strncmp(&device_id[0], &received_device_id[0], 36) != 0) {
+        // Save the device_id
+        Storage::set_device_id(&received_device_id[0]);
+      }
     }
 
   } else {
     PRINT("ERROR: %s", http.errorToString(resp_code).c_str());
-    success = false;
   }
 
  error:

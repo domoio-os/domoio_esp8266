@@ -8,14 +8,8 @@
 #include "domoio.h"
 #include "storage.h"
 
-#define STATE_BTN 0
-#define STATE_LED 13
-
 #define RESET_TIMEOUT 5000
 using namespace reactduino;
-
-
-
 
 namespace led {
   void blink();
@@ -40,7 +34,7 @@ class HomeIM : public InputManager {
 
 
   void loop() {
-    bool btn_state = !digitalRead(STATE_BTN);
+    bool btn_state = !digitalRead(RESET_PORT);
 
     if (btn_state && this->pressed) {
       if (!this->reset_mode && this->pressed_at + RESET_TIMEOUT < millis()) {
@@ -68,18 +62,20 @@ class HomeIM : public InputManager {
   void press() {
     PRINTLN("pressed");
     this->pressed = true;
-    remote_log("BTN pressed");
+    // remote_log("BTN pressed");
     this->pressed_at = millis();
   }
 
   void release() {
     PRINTLN("released");
-    remote_log("BTN released");
+    // remote_log("BTN released");
     this->pressed = false;
     this->pressed_at = NULL;
 
     if (this->reset_mode) {
       delete_credentials();
+    } else {
+      reset_btn_callback();
     }
   }
 };
@@ -98,8 +94,8 @@ public:
   ~HomeController() {
   }
   void initialize() {
-    pinMode(STATE_BTN, INPUT_PULLUP);
-    pinMode(STATE_LED, OUTPUT);
+    pinMode(RESET_PORT, INPUT_PULLUP);
+    pinMode(INTERNAL_LED_PORT, OUTPUT);
 
     this->im.initialize();
   }

@@ -3,6 +3,7 @@
 
 
 #include "customizations.h"
+void custom_setup();
 
 #include "FS.h"
 
@@ -29,7 +30,8 @@ void reset();
  */
 
 enum ActionType {
-  ACTION_LOG
+  ACTION_LOG,
+  ACTION_SET_PORT
 };
 
 enum ReactAction {
@@ -48,6 +50,7 @@ class Message {
   bool confirmable;
 public:
   Message(ActionType _action, const char* msg) : action(_action), payload((byte *)msg), payload_len(strlen(msg)) {}
+  Message(ActionType _action, byte* msg, int length) : action(_action), payload(msg), payload_len(length) {}
   int send();
 };
 
@@ -63,13 +66,15 @@ void ota_update();
 
 
 void remote_log(const char* msg);
+void send_port_change(int port_id, int value);
+
 /*
  * Tools
  */
 
 
-int buff2i(byte *buf, int offset);
-
+int buff2i(byte *buf, int offset=0);
+void i2buff(byte *buffer, int value);
 
 /*
  * Serial
@@ -168,5 +173,39 @@ class DomoioConfig {
 #endif
   }
 };
+
+
+
+/*
+ * ports
+ */
+
+
+enum PortType {
+  PORT_DIGITAL,
+  PORT_ANALOGIC
+};
+
+enum PortIO {
+  PORT_INPUT,
+  PORT_OUTPUT
+};
+
+class Port {
+ public:
+  int id;
+  int value;
+  PortType port_type;
+  PortIO io;
+};
+
+void setup_port(Port*);
+void init_ports();
+void reset_btn_callback();
+Port * get_port(int port_id);
+void set_port(int port_id, int value);
+
+
+
 
 #endif //DOMOIO_H

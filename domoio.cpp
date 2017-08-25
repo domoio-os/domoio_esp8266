@@ -206,6 +206,14 @@ void remote_log(const char *data) {
   msg.send();
 }
 
+void send_port_change(int port_id, int value) {
+  byte buffer[4];
+  i2buff(&buffer[0], port_id);
+  i2buff(&buffer[2], value);
+  Message msg(ACTION_SET_PORT, &buffer[0], 4);
+  msg.send();
+}
+
 void ota_update() {
   reactduino::dispatch(REACT_FLASHING);
   char device_id[37];
@@ -255,23 +263,10 @@ void process_message(CoapPDU *msg) {
   if (strncmp(uri_buf, "/set", 4) == 0) {
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();
-    PRINT("Payload ");
-    PRINTLN(payload_length);
 
     int port_id = buff2i(payload, 0);
     int value = buff2i(payload, 2);
-    PRINT("Port: ");
-    PRINTLN(port_id);
-
-    PRINT("Value: ");
-    PRINTLN(value);
-
-    if (value == 1) {
-      digitalWrite(12, HIGH);
-    } else {
-      digitalWrite(12, LOW);
-    }
-
+    set_port(port_id, value);
     send_confirmation(msg);
   }
 
@@ -322,13 +317,17 @@ int Message::send() {
     msg.setURI("/log");
   }
 
+  if (this->action == ACTION_SET_PORT) {
+    msg.setType(CoapPDU::COAP_CONFIRMABLE);
+    msg.setCode(CoapPDU::COAP_POST);
+    msg.setURI("/set_port");
+  }
+
   // Default settings
   else {
-
     msg.setType(CoapPDU::COAP_NON_CONFIRMABLE);
     msg.setCode(CoapPDU::COAP_POST);
   }
-
 
 
   msg.setMessageID(next_message_id());

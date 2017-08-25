@@ -44,10 +44,12 @@ void setup() {
   Storage::begin();
   reactduino::push_controller(&home_controller);
 
+  custom_setup();
+  init_ports();
+
   WiFi.persistent(false);
   connect_wifi();
 
-  pinMode(12, OUTPUT);
 }
 
 void loop() {

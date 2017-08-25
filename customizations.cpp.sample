@@ -1,0 +1,16 @@
+#include "domoio.h"
+
+
+/*
+  Executed as soon as the device gets started. before connect to
+  internet
+*/
+void custom_setup() {
+}
+
+/*
+  Executed when the user clics the reset button.
+*/
+
+void reset_btn_callback() {
+}

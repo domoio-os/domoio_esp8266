@@ -23,59 +23,14 @@ void custom_setup();
 
 #define NETWORK_TIMEOUT 15000
 
+
+#include "message.h"
+
+
+
 void delete_credentials();
 void reset();
 
-/*
- * messages
- */
-
-enum ActionType {
-  ACTION_LOG,
-  ACTION_SET_PORT
-};
-
-enum ReactAction {
-  REACT_CONNECTING_WIFI,
-  REACT_CONNECTING_DOMOIO,
-  REACT_CONNECTED,
-  REACT_FLASHING,
-  REACT_AP_SERVER,
-  REACT_AP_RESET_WIFI_CONFIG
-};
-
-class Message {
-  ActionType action;
-  byte *payload;
-  int payload_len;
-  bool confirmable;
-public:
-  Message(ActionType _action, const char* msg) : action(_action), payload((byte *)msg), payload_len(strlen(msg)) {}
-  Message(ActionType _action, byte* msg, int length) : action(_action), payload(msg), payload_len(length) {}
-  int send();
-};
-
-bool is_connected();
-void connect();
-void disconnect();
-void receive_messages();
-int send(const void* data, int size);
-bool register_device(String claim_code, String public_key);
-bool is_ota_requested();
-bool is_reconnect_requested();
-void ota_update();
-
-
-void remote_log(const char* msg);
-void send_port_change(int port_id, int value);
-
-/*
- * Tools
- */
-
-
-int buff2i(byte *buf, int offset=0);
-void i2buff(byte *buffer, int value);
 
 /*
  * Serial
@@ -205,8 +160,6 @@ void init_ports();
 void reset_btn_callback();
 Port * get_port(int port_id);
 void set_port(int port_id, int value);
-
-
 
 
 #endif //DOMOIO_H

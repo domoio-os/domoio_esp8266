@@ -22,6 +22,7 @@
 #include "storage.h"
 #include "reactduino.h"
 #include "scenes.h"
+#include "watchers.h"
 
 void delete_credentials() {
   WifiConfig::reset();
@@ -65,6 +66,7 @@ void loop() {
   }
 
   receive_messages();
+  watchers_loop();
 
   if (is_ota_requested()) {
     disconnect();

@@ -35,8 +35,9 @@ void DHTWatcher::loop(long time) {
 
 
 void DHTWatcher::send_data() {
-  IntMessageValue temp(this->temp_port, 1);
-  IntMessageValue hum(this->hum_port, 3);
+  FloatMessageValue temp(this->temp_port, DHT11->getCelsius());
+  FloatMessageValue hum(this->hum_port, DHT11->getHumidity());
+
   MessageValue* changes[] = {&temp, &hum};
   send_ports_change(changes, 2);
 }

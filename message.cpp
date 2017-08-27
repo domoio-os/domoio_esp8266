@@ -1,4 +1,5 @@
 #include "domoio.h"
+#include "message.h"
 #include "cantcoap.h"
 
 int Message::send() {
@@ -43,23 +44,21 @@ void remote_log(const char *data) {
   msg.send();
 }
 
-void send_port_change(int port_id, int value) {
-  byte buffer[4];
-  i2buff(&buffer[0], port_id);
-  i2buff(&buffer[2], value);
-  Message msg(ACTION_SET_PORT, &buffer[0], 4);
+void send_port_change(MessageValue *port_value) {
+  byte buffer[MESSAGE_VALUE_LENGTH];
+  port_value->binary(&buffer[0]);
+  Message msg(ACTION_SET_PORT, &buffer[0], MESSAGE_VALUE_LENGTH);
   msg.send();
 }
 
 
 void send_ports_change(MessageValue *port_values[], int ports_length) {
-  int length = 4 * ports_length;
+  int length = ports_length * MESSAGE_VALUE_LENGTH;
   byte buffer[length];
 
   for (int i=0; i < ports_length; i++) {
-    int offset = i * 4;
-    i2buff(&buffer[offset], port_values[i]->port_id);
-    port_values[i]->binary(&buffer[offset + 2]);
+    int offset = i * MESSAGE_VALUE_LENGTH;
+    port_values[i]->binary(&buffer[offset]);
   }
 
   Message msg(ACTION_SET_PORTS, &buffer[0], length);

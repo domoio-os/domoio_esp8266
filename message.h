@@ -41,9 +41,14 @@ bool is_ota_requested();
 bool is_reconnect_requested();
 void ota_update();
 
+#define MESSAGE_VALUE_LENGTH 7
+#define VALUE_TYPE_INT 0
+#define VALUE_TYPE_FLOAT 1
+
 class MessageValue {
 public:
   virtual boolean binary(byte *buffer) { return false; }
+protected:
   int port_id;
 };
 
@@ -55,7 +60,9 @@ public:
   }
 
   boolean binary(byte *buffer) {
-    i2buff(buffer, value);
+    i2buff(buffer, this->port_id);
+    *(buffer + 2) = VALUE_TYPE_INT;
+    int_to_buff32(buffer + 3, this->value);
     return true;
   };
 private:
@@ -63,9 +70,27 @@ private:
 };
 
 
+class FloatMessageValue : public MessageValue {
+public:
+  FloatMessageValue(int port_id, float value) {
+    this->port_id = port_id;
+    this->value = value;
+  }
+
+  boolean binary(byte *buffer) {
+    i2buff(buffer, this->port_id);
+    *(buffer + 2) = VALUE_TYPE_FLOAT;
+    float_to_buff32(buffer + 3, this->value);
+    return true;
+  };
+private:
+  float value;
+};
+
+
 
 void remote_log(const char* msg);
-void send_port_change(int port_id, int value);
+void send_port_change(MessageValue *port_value);
 void send_ports_change(MessageValue *ports_values[], int length);
 
 

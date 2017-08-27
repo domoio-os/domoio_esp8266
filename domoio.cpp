@@ -245,15 +245,36 @@ void process_message(CoapPDU *msg) {
   char uri_buf[URI_BUFFER_LENGTH];
   int uri_size;
   msg->getURI(&uri_buf[0], URI_BUFFER_LENGTH, &uri_size);
-  PRINT("URI: ");
-  PRINTLN(uri_buf);
-  if (strncmp(uri_buf, "/set", 4) == 0) {
+
+  if (strncmp(uri_buf, "/set_ports", 11) == 0) {
+    int payload_length = msg->getPayloadLength();
+    uint8_t *payload = msg->getPayloadPointer();
+
+    int ports_length = payload_length / MESSAGE_VALUE_LENGTH;
+    for (int i=0; i < ports_length; i++) {
+      int offset = i * MESSAGE_VALUE_LENGTH;
+      byte *buffer = payload + offset;
+      int port_id = buff2i(buffer, 0);
+
+      if (*(buffer + 2) == 0) {
+        int value = buff32_to_int(buffer + 3);
+        set_port(port_id, value);
+      }
+    }
+
+    send_confirmation(msg);
+  }
+
+  else if (strncmp(uri_buf, "/set", 4) == 0) {
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();
 
     int port_id = buff2i(payload, 0);
-    int value = buff2i(payload, 2);
-    set_port(port_id, value);
+    if (*(payload + 2) == 0) {
+      int value = buff32_to_int(payload + 3);
+      set_port(port_id, value);
+    }
+
     send_confirmation(msg);
   }
 
@@ -277,9 +298,6 @@ void receive_messages() {
   if (size <= 0) {
     return;
   }
-
-  // PRINT("Received: ");
-  // PRINTLN(size);
 
   CoapPDU coap_msg = CoapPDU(buffer, size);
 

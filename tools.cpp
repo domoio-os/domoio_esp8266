@@ -20,6 +20,11 @@ void int_to_buff32(byte *buffer, int value) {
 }
 
 
+int buff32_to_int(byte *buffer) {
+  return *(buffer) << 24 | *(buffer + 2) << 8 | *(buffer + 3);
+}
+
+
 void float_to_buff32(byte *buffer, float value) {
   bool isNeg = value < 0;
   if ( isNeg ) value = -value;

@@ -33,6 +33,8 @@ void set_port(int port_id, int value) {
   }
 }
 
+
+
 void init_ports() {
   for (SimpleList<Port *>::iterator itr = ports_list.begin(); itr != ports_list.end(); ++itr) {
     Port *port = (Port *)*itr;

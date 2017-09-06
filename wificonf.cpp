@@ -152,6 +152,7 @@ void connect_to_ap() {
 
 void connect_wifi() {
   if (WifiConfig::is_configured()) {
+    WiFi.mode(WIFI_STA);
     connect_to_ap();
   } else {
     start_ap_mode();

@@ -70,6 +70,7 @@ void loop() {
 
   if (is_ota_requested()) {
     disconnect();
-    ota_update();
+    delay(3000);
+    run_ota_update();
   }
 }

@@ -4,13 +4,12 @@
 #include "cantcoap.h"
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
-#include <ESP8266httpUpdate.h>
 #include "storage.h"
 #include "reactduino.h"
 
 #define URI_BUFFER_LENGTH 25
 
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 512
 
 DomoioConfig domoio_config;
 
@@ -19,10 +18,8 @@ bool session_started = false;
 
 WiFiClientSecure *client;
 
-bool ota_requested = false;
-bool reconnect_requested = false;
 
-bool is_ota_requested() { return ota_requested; }
+bool reconnect_requested = false;
 bool is_reconnect_requested() { return reconnect_requested; }
 
 int message_id_counter = 0;
@@ -104,10 +101,6 @@ bool handsake() {
   byte nounce_clean[size];
   decrypt(&buffer[0], &nounce_clean[0], size);
   send(&nounce_clean, 40);
-  // PRINT("Received: ");
-  // PRINT(size);
-  // PRINT(" => ");
-  // PRINTLN((char *) &buffer[0]);
 
   // Read the encryptd nounce
   size = block_until_receive();
@@ -201,46 +194,6 @@ void disconnect() {
 }
 
 
-void ota_update() {
-  reactduino::dispatch(REACT_FLASHING);
-  char device_id[37];
-
-  if (Storage::get_device_id(&device_id[0], 37) == -1) {
-    PRINTLN("Error reading device id");
-    return;
-  }
-  device_id[36] = '\0';
-
-  String url = domoio_config.api_url + "/ota?device_id=" + String(&device_id[0]);
-  PRINT("URL: %s", url.c_str());
-
-  t_httpUpdate_return ret;
-  if (domoio_config.ssl_api) {
-    ret = ESPhttpUpdate.update(url, "", domoio_config.api_fingerprint);
-  } else {
-    ret = ESPhttpUpdate.update(url);
-  }
-
-  delay(1000);
-  switch(ret) {
-  case HTTP_UPDATE_FAILED:
-    //   ! Serial.println("HTTP_UPDATE_FAILD Error");
-    PRINT("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-    break;
-
-  case HTTP_UPDATE_NO_UPDATES:
-    PRINTLN("HTTP_UPDATE_NO_UPDATES");
-    break;
-
-  case HTTP_UPDATE_OK:
-    PRINTLN("HTTP_UPDATE_OK");
-    break;
-  }
-
-  reset();
-}
-
-
 void process_message(CoapPDU *msg) {
   char uri_buf[URI_BUFFER_LENGTH];
   int uri_size;
@@ -277,12 +230,28 @@ void process_message(CoapPDU *msg) {
 
     send_confirmation(msg);
   }
+  else if (strncmp(uri_buf, "/flash_url", 10) == 0) {
+    PRINTLN("Flashing from url");
+    int payload_length = msg->getPayloadLength();
+    uint8_t *payload = msg->getPayloadPointer();
+
+    // Check the first byte to know whether or not the url includes a fingerprint
+    bool https = payload[0] == 1;
+    OTARequest *request;
+    if (false) {
+      // TODO: Implement HTTPS
+    } else {
+      request = new OTARequest((char*) payload + 1, payload_length - 1);
+    }
+
+    schedule_ota_update(request);
+    send_confirmation(msg);
+  }
 
   else if (strncmp(uri_buf, "/flash", 6) == 0) {
     PRINTLN("Flashing device");
     send_confirmation(msg);
-    delay(1000);
-    ota_requested = true;
+    schedule_stock_ota_update();
   }
   else if (strncmp(uri_buf, "/ping", 5) == 0) {
     send_confirmation(msg);

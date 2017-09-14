@@ -1,7 +1,7 @@
 #ifndef DOMOIO_H
 #define DOMOIO_H
 
-#define FIRMWARE_VERSION "0.2.1"
+#define FIRMWARE_VERSION "0.2.2"
 
 #include "customizations.h"
 void custom_setup();
@@ -26,11 +26,47 @@ void custom_setup();
 
 #include "message.h"
 
-
+bool register_device(String claim_code, String public_key);
+bool is_reconnect_requested();
+bool is_ota_requested();
 
 void delete_credentials();
 void reset();
 
+
+#define OTA_REQUEST_URL_LENGTH 512
+#define OTA_REQUEST_FINGERPRINT_LENGTH 128
+
+class OTARequest {
+ public:
+  OTARequest(const char* url, int url_length) {
+    if (url_length + 1 > OTA_REQUEST_URL_LENGTH) {
+      return;
+    }
+
+    strncpy(&this->url[0], url, url_length);
+    this->url[url_length] = 0;
+
+    this->https = false;
+  }
+
+  OTARequest(const char* url, int url_length, const char* fingerprint, int fingerprint_length) {
+    strncpy(&this->url[0], url, OTA_REQUEST_URL_LENGTH);
+    strncpy(&this->fingerprint[0], fingerprint, OTA_REQUEST_FINGERPRINT_LENGTH);
+    this->https = false;
+  }
+
+  void run();
+
+ private:
+  bool https;
+  char url[OTA_REQUEST_URL_LENGTH];
+  char fingerprint[OTA_REQUEST_FINGERPRINT_LENGTH];
+};
+
+void schedule_stock_ota_update();
+void run_ota_update();
+void schedule_ota_update(OTARequest *request);
 
 /*
  * Serial
@@ -130,7 +166,7 @@ class DomoioConfig {
   }
 };
 
-
+extern DomoioConfig domoio_config;
 
 /*
  * ports

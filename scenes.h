@@ -1,7 +1,6 @@
 #ifndef SCENES_H
 #define SCENES_H
 
-
 #include <Arduino.h>
 #include <Ticker.h>
 #include "reactduino.h"

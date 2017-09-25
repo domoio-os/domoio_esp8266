@@ -1,8 +1,5 @@
 #include <Arduino.h>
-#include <Ticker.h>
-
-
-#define STATE_LED 13
+#include "domoio.h"
 
 namespace led {
 
@@ -10,11 +7,11 @@ namespace led {
 
   void turn_on() {
     led_state = true;
-    digitalWrite(STATE_LED, LOW);
+    digitalWrite(INTERNAL_LED_PORT, LOW);
   }
   void turn_off() {
     led_state = false;
-    digitalWrite(STATE_LED, HIGH);
+    digitalWrite(INTERNAL_LED_PORT, HIGH);
   }
 
   void blink() {

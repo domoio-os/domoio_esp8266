@@ -23,7 +23,7 @@ void schedule_stock_ota_update() {
   device_id[36] = '\0';
 
   String url = domoio_config.api_url + "/ota?device_id=" + String(&device_id[0]);
-
+  PRINT("URL: %s\n", url.c_str());
   t_httpUpdate_return ret;
 
   if (domoio_config.ssl_api) {

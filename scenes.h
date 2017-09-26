@@ -118,6 +118,7 @@ public:
       return;
 
     case REACT_FLASHING:
+    case REACT_AP_SETUP_WIFI_CONFIG:
     case REACT_AP_RESET_WIFI_CONFIG:
       flipper.detach();
       flipper.attach(0.05, led::blink);

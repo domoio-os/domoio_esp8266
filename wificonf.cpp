@@ -2,6 +2,7 @@
 #include "domoio.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <DNSServer.h>
 #include "FS.h"
 #include "reactduino.h"
 
@@ -9,8 +10,8 @@ extern "C" {
 #include "user_interface.h"
 }
 
-ESP8266WebServer *server = NULL;;
-
+ESP8266WebServer *server = NULL;
+DNSServer *dns_server = NULL;
 
 void handleRoot() {
 	server->send(200, "text/html", "<h1>You are connected</h1>");
@@ -21,13 +22,21 @@ void handleNotFound(){
 }
 
 void start_ap_mode() {
-  IPAddress ip(192, 168, 5, 1);
-  IPAddress gateway(192, 168, 5, 1);
+  IPAddress ip(192, 168, 4, 1);
+  IPAddress gateway(192, 168, 4, 1);
   IPAddress netmask(255, 255, 255, 0);
 
-  WiFi.config(ip, gateway, netmask);
+  WiFi.softAPConfig(ip, gateway, netmask);
   String ssid = "DIO_" + String(ESP.getChipId());
   WiFi.softAP(ssid.c_str());
+
+  delay(1000);
+
+
+  // Start the dns server
+  dns_server = new DNSServer();
+  dns_server->setErrorReplyCode(DNSReplyCode::NoError);
+  dns_server->start(53, "*", ip);
 }
 
 bool wait_for_wifi() {
@@ -94,6 +103,11 @@ void handle_submit() {
     return;
   }
 
+  dns_server->stop();
+
+  reactduino::dispatch(REACT_AP_SETUP_WIFI_CONFIG);
+
+
   String buffer = "";
   buffer += "{\"ssid\":\"" + ssid + "\", \"status\":\"ok\"}";
   server->send(200, "application/json", buffer);
@@ -129,9 +143,10 @@ void run_config_server() {
   server->on("/config", HTTP_POST, handle_submit);
   server->onNotFound(handleNotFound);
 	server->begin();
-  PRINTLN("Server started");
+  PRINTLN("AP Server started");
   reactduino::dispatch(REACT_AP_SERVER);
   while(true) {
+    dns_server->processNextRequest();
     server->handleClient();
   }
 }

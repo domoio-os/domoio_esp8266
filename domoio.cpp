@@ -279,7 +279,7 @@ void receive_messages() {
 }
 
 
-bool register_device(String claim_code, String public_key) {
+bool register_device(String name, String claim_code, String public_key) {
   HTTPClient http;
   String url = domoio_config.api_url + "/api/register_device";
   bool success = false;
@@ -298,7 +298,8 @@ bool register_device(String claim_code, String public_key) {
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
   String post_data("");
-  post_data += "claim_code=" + claim_code +
+  post_data += "name=" + name +
+    "&claim_code=" + claim_code +
     "&device[type]=esp8266" +
     "&device[public_key]=" + public_key +
     "&device[hardware_id]=" + String(ESP.getChipId());

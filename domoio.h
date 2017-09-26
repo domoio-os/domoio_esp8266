@@ -26,7 +26,7 @@ void custom_setup();
 
 #include "message.h"
 
-bool register_device(String claim_code, String public_key);
+bool register_device(String name, String claim_code, String public_key);
 bool is_reconnect_requested();
 bool is_ota_requested();
 

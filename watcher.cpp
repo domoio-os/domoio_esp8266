@@ -9,8 +9,6 @@ void setup_watcher(Watcher *watcher) {
   watchers_list.push_back(watcher);
 }
 
-
-
 void watchers_loop() {
   long time = millis();
   for (SimpleList<Watcher *>::iterator itr = watchers_list.begin(); itr != watchers_list.end(); ++itr) {

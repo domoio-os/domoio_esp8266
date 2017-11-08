@@ -1,9 +1,10 @@
 Domoio firmware for ESP8266 devices
 ===========================================
 
-#Requirements
+# Requirements
 - Arduino IDE. Get the latest version from the [Arduino website](http://www.arduino.cc/en/main/software)
 - The [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
+
 # Setup
 ## Setup the Makefile
 Create a valid Makefile using Makefile.sample or Makefile.nodemcuv2 as example

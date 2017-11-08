@@ -28,7 +28,7 @@ protected:
 
 class DHTWatcher : public Watcher {
 public:
- DHTWatcher(int _model, int _pin, int _temp_port, int _hum_port, long _duration) : Watcher(_duration), model(_model), pin(_pin), temp_port(_temp_port), hum_port(_hum_port) {
+ DHTWatcher(int _model, int _pin, int _port, long _duration) : Watcher(_duration), model(_model), pin(_pin), port(_port) {
     this->init();
     PRINT("Initializing duration: %d\n", this->duration);
   }
@@ -38,8 +38,7 @@ public:
 private:
   const int model;
   const int pin;
-  const int temp_port;
-  const int hum_port;
+  const int port;
 
   void init();
   bool getting_data;

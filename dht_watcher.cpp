@@ -2,9 +2,6 @@
 #include "Arduino.h"
 #include "watchers.h"
 
-
-// DHT dht(D4, DHT11);
-
 void DHTWatcher::init() {
   this->driver = new DHT(this->pin, this->model);
   if (!this->driver) {
@@ -24,11 +21,9 @@ void DHTWatcher::loop(long time) {
     if (!isnan(t) && !isnan(h)) {
       PRINT("Temp: %.2f, Hum: %.2f\n", t, h);
 
-      FloatMessageValue temp(this->temp_port, t);
-      FloatMessageValue hum(this->hum_port, h);
-
-      MessageValue* changes[] = {&temp, &hum};
-      send_ports_change(changes, 2);
+      char out[50];
+      snprintf(&out[0], 50, "{\"temp\":%.4f, \"hum\":%.4f}", t, h);
+      send_json(this->port, &out[0]);
       this->set_executed(time);
     }
   }

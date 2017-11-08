@@ -2,6 +2,19 @@
 #include "message.h"
 #include "cantcoap.h"
 
+int send_json(int port_id, const char* json) {
+  char uri[30];
+  snprintf(&uri[0], 30, "/json/%d", port_id);
+
+  CoapPDU msg;
+  msg.setType(CoapPDU::COAP_CONFIRMABLE);
+  msg.setCode(CoapPDU::COAP_POST);
+  msg.setURI(&uri[0]);
+  msg.setMessageID(next_message_id());
+  msg.setPayload((uint8_t*) json, strlen(json));
+  return ::send(msg.getPDUPointer(), msg.getPDULength());
+}
+
 int Message::send() {
   CoapPDU msg;
 

@@ -85,10 +85,10 @@ private:
 };
 
 
-
 void remote_log(const char* msg);
 void send_port_change(MessageValue *port_value);
 void send_ports_change(MessageValue *ports_values[], int length);
+int send_json(int, const char*);
 
 
 #endif //MESSAGE_H

@@ -1,7 +1,7 @@
 #ifndef DOMOIO_H
 #define DOMOIO_H
 
-#define FIRMWARE_VERSION "0.2.4"
+#define FIRMWARE_VERSION "0.2.5"
 
 #include "customizations.h"
 void custom_setup();

@@ -1,5 +1,5 @@
-#include <Arduino.h>
-#include "domoio_core.h"
+#include "domoio.h"
+#include "customizations.h"
 
 namespace led {
 
@@ -7,11 +7,11 @@ namespace led {
 
   void turn_on() {
     led_state = true;
-    digitalWrite(INTERNAL_LED_PORT, LOW);
+    set_port(INTERNAL_LED_PORT, 1);
   }
   void turn_off() {
     led_state = false;
-    digitalWrite(INTERNAL_LED_PORT, HIGH);
+    set_port(INTERNAL_LED_PORT, 0);
   }
 
   void blink() {

@@ -24,6 +24,9 @@ class Port {
   int value;
   PortType port_type;
   PortIO io;
+  bool active_low;
+
+  void set_value(int value);
 };
 
 void setup_port(Port*);

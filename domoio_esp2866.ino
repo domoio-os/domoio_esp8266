@@ -17,6 +17,7 @@
 #include <ESP8266httpUpdate.h>
 
 #include "cantcoap.h"
+#include "domoio_core.h"
 #include "domoio.h"
 #include "wificonf.h"
 #include "storage.h"

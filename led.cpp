@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "domoio.h"
+#include "domoio_core.h"
 
 namespace led {
 

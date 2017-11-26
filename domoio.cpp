@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Ticker.h>
+#include "domoio_core.h"
 #include "domoio.h"
 #include "cantcoap.h"
 #include <WiFiClientSecure.h>

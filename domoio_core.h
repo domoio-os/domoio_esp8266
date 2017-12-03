@@ -1,6 +1,6 @@
 #ifndef DOMOIO_CORE_H
 #define DOMOIO_CORE_H
-#define FIRMWARE_VERSION "0.2.5"
+#define FIRMWARE_VERSION "0.3.0"
 
 #include "customizations.h"
 

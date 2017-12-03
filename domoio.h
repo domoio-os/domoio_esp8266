@@ -29,12 +29,22 @@ class Port {
   void set_value(int value);
 };
 
-void setup_port(Port*);
-void init_ports();
-void reset_btn_callback();
+typedef enum {
+  EVENT_CONNECTED,
+  EVENT_DISCONNECTED,
+  EVENT_NEW_CONFIG
+} event_type;
 
+
+void setup_port(Port*);
 Port * get_port(int port_id);
 void set_port(int port_id, int value);
+
+void custom_setup();
+void reset_btn_callback();
+void handle_event(event_type type, void * payload);
+
+int request_config();
 
 /*
  * Messages

@@ -3,7 +3,6 @@
 #define FIRMWARE_VERSION "0.2.5"
 
 #include "customizations.h"
-void custom_setup();
 
 #include "FS.h"
 
@@ -11,6 +10,9 @@ void custom_setup();
 
 
 #include "message.h"
+
+void init_ports();
+
 
 bool register_device(String name, String claim_code, String public_key);
 bool is_reconnect_requested();

@@ -8,6 +8,9 @@
 
 #define NETWORK_TIMEOUT 15000
 
+#define URI_BUFFER_LENGTH 25
+#define BUFFER_SIZE 512
+#define CHUNK_LENGTH 400
 
 #include "message.h"
 

@@ -7,14 +7,12 @@
 #include <ESP8266HTTPClient.h>
 #include "storage.h"
 #include "reactduino.h"
-
-#define URI_BUFFER_LENGTH 25
-
-#define BUFFER_SIZE 512
+#include "actions.h"
 
 DomoioConfig domoio_config;
 
 byte buffer[BUFFER_SIZE];
+char uri_buf[URI_BUFFER_LENGTH];
 bool session_started = false;
 
 WiFiClientSecure *client;
@@ -36,7 +34,7 @@ int next_message_id() {
 
 
 void clear_buffer() {
-  memset(buffer, 0, BUFFER_SIZE);
+  memset(&buffer[0], 0, BUFFER_SIZE);
 }
 
 bool is_connected() {
@@ -194,11 +192,12 @@ void disconnect() {
   client = NULL;
 }
 
-
 void process_message(CoapPDU *msg) {
-  char uri_buf[URI_BUFFER_LENGTH];
+  memset(&uri_buf[0], 0, URI_BUFFER_LENGTH);
   int uri_size;
   msg->getURI(&uri_buf[0], URI_BUFFER_LENGTH, &uri_size);
+
+  // PRINT("URI: %s\n", &uri_buf[0]);
 
   if (strncmp(uri_buf, "/set_ports", 11) == 0) {
     int payload_length = msg->getPayloadLength();
@@ -217,6 +216,17 @@ void process_message(CoapPDU *msg) {
     }
 
     send_confirmation(msg);
+  }
+
+  else if (strncmp(&uri_buf[0], "/blob_start", 11) == 0) {
+    start_transfer(msg);
+  }
+
+  else if (strncmp(&uri_buf[0], "/blob_chunk", 11) == 0) {
+    process_chunk(msg);
+  }
+  else if (strncmp(&uri_buf[0], "/blob_end", 9) == 0) {
+    finish_transfer(msg);
   }
 
   else if (strncmp(uri_buf, "/set", 4) == 0) {

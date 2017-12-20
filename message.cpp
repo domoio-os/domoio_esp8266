@@ -15,6 +15,14 @@ int send_json(int port_id, const char* json) {
   msg.setPayload((uint8_t*) json, strlen(json));
   return ::send(msg.getPDUPointer(), msg.getPDULength());
 }
+int request_config() {
+  CoapPDU msg;
+  msg.setType(CoapPDU::COAP_CONFIRMABLE);
+  msg.setCode(CoapPDU::COAP_GET);
+  msg.setURI("/config");
+  msg.setMessageID(next_message_id());
+  return ::send(msg.getPDUPointer(), msg.getPDULength());
+}
 
 int Message::send() {
   CoapPDU msg;

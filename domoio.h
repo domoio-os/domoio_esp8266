@@ -3,6 +3,9 @@
 #include "Arduino.h"
 
 
+void domoio_setup();
+void domoio_loop();
+
 /*
  * ports
  */

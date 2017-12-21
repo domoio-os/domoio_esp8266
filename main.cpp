@@ -24,6 +24,9 @@
 #include "reactduino.h"
 #include "scenes.h"
 #include "watchers.h"
+#include <cstdio>
+
+bool fatal_error = false;
 
 void delete_credentials() {
   WifiConfig::reset();
@@ -38,7 +41,7 @@ void reset() {
 
 HomeController home_controller;
 
-void setup() {
+void domoio_setup() {
 #ifdef SERIAL_LOG
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
@@ -54,13 +57,17 @@ void setup() {
 
 }
 
-void loop() {
+void domoio_loop() {
+  if (fatal_error) return;
+
   reactduino::loop();
   if (is_reconnect_requested()) {
+    handle_event(EVENT_DISCONNECTED, NULL);
     disconnect();
   }
 
   if (!is_connected()) {
+    handle_event(EVENT_DISCONNECTED, NULL);
     delay(1000);
     connect();
     return;

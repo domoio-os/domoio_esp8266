@@ -1,7 +1,7 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#import "tools.h"
+#include "tools.h"
 
 int next_message_id();
 

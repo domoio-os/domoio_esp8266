@@ -1,11 +1,10 @@
 cmake_minimum_required (VERSION 2.8.8)
 project (domoio)
 
+set (PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(ESP_ROOT /Users/harlock/src/8266/esp8266)
-set(AXTLS_ROOT /Users/harlock/src/8266/axtls-8266)
-
-
+set(ESP_ROOT ${PROJECT_ROOT}/../esp8266)
+set(AXTLS_ROOT ${PROJECT_ROOT}/../axtls-8266)
 
 
 set(XTENSA_BIN ${ESP_ROOT}/tools/xtensa-lx106-elf/bin)
@@ -32,12 +31,6 @@ include_directories(
   ${ESP_ROOT}/libraries/DNSServer/src
   ${ESP_ROOT}/libraries/Ticker
   ${ESP_ROOT}/libraries/ArduinoOTA
-  # ${ESP_ROOT}/libraries/-/src
-  # ${ESP_ROOT}/libraries/-/src
-  # ${ESP_ROOT}/libraries/-/src
-  # ${ESP_ROOT}/libraries/-/src
-  # ${ESP_ROOT}/libraries/-/src
-  # ${ESP_ROOT}/libraries/-/src
 
   ${ESP_ROOT}/tools/sdk/include
   ${ESP_ROOT}/tools/sdk/lwip/include
@@ -48,20 +41,20 @@ include_directories(
 
 
 set(SRC ${SRC}
-  ./actions
-  ./crypto
-  ./flash
-  ./led
-  ./message
-  ./reactduino
-  ./tools
-  ./wificonf
-  ./cantcoap
-  ./domoio
-  ./main
-  ./port
-  ./storage
-  ./watcher
+  ./src/actions
+  ./src/crypto
+  ./src/flash
+  ./src/led
+  ./src/message
+  ./src/reactduino
+  ./src/tools
+  ./src/wificonf
+  ./src/cantcoap
+  ./src/domoio
+  ./src/main
+  ./src/port
+  ./src/storage
+  ./src/watcher
 )
 
 

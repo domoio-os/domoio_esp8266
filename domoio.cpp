@@ -179,6 +179,7 @@ void connect() {
 
   if (handsake()) {
     reactduino::dispatch(REACT_CONNECTED);
+    handle_event(EVENT_CONNECTED, NULL);
     start_ping();
   }
 }

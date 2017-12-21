@@ -49,6 +49,12 @@ void domoio_setup() {
   Storage::begin();
   reactduino::push_controller(&home_controller);
 
+  if (!verify_keys()) {
+    reactduino::dispatch(REACT_FLASHING);
+    fatal_error = true;
+    return;
+  }
+
   custom_setup();
   init_ports();
 

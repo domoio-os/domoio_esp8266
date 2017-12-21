@@ -21,6 +21,7 @@ bool register_device(String name, String claim_code, String public_key);
 bool is_reconnect_requested();
 bool is_ota_requested();
 
+bool verify_keys();
 void delete_credentials();
 void reset();
 

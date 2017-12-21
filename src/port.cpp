@@ -46,6 +46,7 @@ void init_ports() {
   for (SimpleList<Port *>::iterator itr = ports_list.begin(); itr != ports_list.end(); ++itr) {
     Port *port = (Port *)*itr;
     if (port->io == PORT_OUTPUT) {
+      port->set_value(0);
       pinMode(port->id, OUTPUT);
     } else {
       pinMode(port->id, INPUT);

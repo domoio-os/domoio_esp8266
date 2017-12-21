@@ -40,51 +40,51 @@ void reset() {
 }
 
 HomeController home_controller;
-
-void domoio_setup() {
+namespace domoio {
+  void setup() {
 #ifdef SERIAL_LOG
-  Serial.begin(115200);
-  // Serial.setDebugOutput(true);
+    Serial.begin(115200);
+    // Serial.setDebugOutput(true);
 #endif
-  Storage::begin();
-  reactduino::push_controller(&home_controller);
+    Storage::begin();
+    reactduino::push_controller(&home_controller);
 
-  if (!verify_keys()) {
-    reactduino::dispatch(REACT_FLASHING);
-    fatal_error = true;
-    return;
+    if (!verify_keys()) {
+      reactduino::dispatch(REACT_FLASHING);
+      fatal_error = true;
+      return;
+    }
+
+    init_ports();
+
+    WiFi.persistent(false);
+    connect_wifi();
+
   }
 
-  custom_setup();
-  init_ports();
+  void loop() {
+    if (fatal_error) return;
 
-  WiFi.persistent(false);
-  connect_wifi();
+    reactduino::loop();
+    if (is_reconnect_requested()) {
+      handle_event(EVENT_DISCONNECTED, NULL);
+      disconnect();
+    }
 
-}
+    if (!is_connected()) {
+      handle_event(EVENT_DISCONNECTED, NULL);
+      delay(1000);
+      connect();
+      return;
+    }
 
-void domoio_loop() {
-  if (fatal_error) return;
+    receive_messages();
+    watchers_loop();
 
-  reactduino::loop();
-  if (is_reconnect_requested()) {
-    handle_event(EVENT_DISCONNECTED, NULL);
-    disconnect();
-  }
-
-  if (!is_connected()) {
-    handle_event(EVENT_DISCONNECTED, NULL);
-    delay(1000);
-    connect();
-    return;
-  }
-
-  receive_messages();
-  watchers_loop();
-
-  if (is_ota_requested()) {
-    disconnect();
-    delay(3000);
-    run_ota_update();
+    if (is_ota_requested()) {
+      disconnect();
+      delay(3000);
+      run_ota_update();
+    }
   }
 }

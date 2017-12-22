@@ -37,10 +37,10 @@ typedef enum {
 
 
 void setup_port(Port*);
+
 Port * get_port(int port_id);
 void set_port(int port_id, int value);
 
-void custom_setup();
 void reset_btn_callback();
 void handle_event(event_type type, void * payload);
 
@@ -89,6 +89,14 @@ class FloatMessageValue : public MessageValue {
 };
 
 
+namespace domoio {
+  void setup();
+  void loop();
+  void set_led_port(Port*);
+  void set_reset_port(Port*);
+}
+
+
 void remote_log(const char* msg);
 void send_port_change(MessageValue *port_value);
 void send_ports_change(MessageValue *ports_values[], int length);
@@ -112,5 +120,6 @@ int send_json(int, const char*);
 
 #endif
 
+#define __FIX_COMPILER_ISSUES SPIFFS.begin();SPIFFS.end();sscanf("", "");Serial.flush();
 
 #endif //DOMOIO_H

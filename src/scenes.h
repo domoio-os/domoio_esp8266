@@ -10,13 +10,14 @@
 #define RESET_TIMEOUT 5000
 using namespace reactduino;
 
+
 namespace led {
   void blink();
   void turn_on();
   void turn_off();
 }
 
-Ticker flipper;
+extern Ticker flipper;
 
 class HomeIM : public InputManager {
   bool pressed;
@@ -31,31 +32,7 @@ class HomeIM : public InputManager {
     this->reset_mode = false;
   }
 
-
-  void loop() {
-    bool btn_state = !digitalRead(RESET_PORT);
-
-    if (btn_state && this->pressed) {
-      if (!this->reset_mode && this->pressed_at + RESET_TIMEOUT < millis()) {
-        this->reset_mode = true;
-        digitalWrite(LED_BUILTIN, LOW);
-        PRINTLN("Reset mode on");
-        reactduino::dispatch(REACT_AP_RESET_WIFI_CONFIG);
-      }
-      return;
-    }
-
-    if (btn_state) {
-      this->press();
-      return;
-    }
-
-    if (!btn_state && this->pressed) {
-      this->release();
-      return;
-    }
-
-  }
+  void loop();
 
  private:
   void press() {
@@ -93,9 +70,6 @@ public:
   ~HomeController() {
   }
   void initialize() {
-    pinMode(RESET_PORT, INPUT_PULLUP);
-    pinMode(INTERNAL_LED_PORT, OUTPUT);
-
     this->im.initialize();
   }
 

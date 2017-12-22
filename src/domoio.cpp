@@ -27,6 +27,14 @@ double last_seen_at;
 
 Ticker ping_ticker;
 
+const char* product_version;
+
+namespace domoio {
+  void set_product_version(const char* v) {
+    product_version = v;
+  }
+}
+
 int next_message_id() {
   int id = message_id_counter++;
   return id;
@@ -79,7 +87,7 @@ const char *expected = "HELLO";
 int expected_len = strlen(expected);
 
 bool handsake() {
-  int version_len = strlen(FIRMWARE_VERSION);
+  int version_len = strlen(DOMOIO_VERSION);
   int hello_len = 36 + version_len;
   char hello_buf[hello_len];
   if (Storage::get_device_id(&hello_buf[0], 37) == -1) {
@@ -87,7 +95,7 @@ bool handsake() {
     return false;
   }
 
-  strncpy(&hello_buf[36], FIRMWARE_VERSION, version_len);
+  strncpy(&hello_buf[36], DOMOIO_VERSION, version_len);
 
   PRINT("hello: %s", &hello_buf[0]);
 
@@ -316,11 +324,12 @@ bool register_device(String name, String claim_code, String public_key) {
     "&device[public_key]=" + public_key +
     "&device[hardware_id]=" + String(ESP.getChipId());
 
-#ifdef PRODUCT_VERSION
-  post_data += "&device[product_version]=" + String(PRODUCT_VERSION);
-#endif
-#ifdef FIRMWARE_VERSION
-  post_data += "&device[firmware_version]=" + String(FIRMWARE_VERSION);
+  if (product_version != NULL) {
+    post_data += "&device[product_version]=" + String(product_version);
+  }
+
+#ifdef DOMOIO_VERSION
+  post_data += "&device[firmware_version]=" + String(DOMOIO_VERSION);
 #endif
 
   int resp_code = http.POST(post_data);

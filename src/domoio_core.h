@@ -1,6 +1,5 @@
 #ifndef DOMOIO_CORE_H
 #define DOMOIO_CORE_H
-#define FIRMWARE_VERSION "0.3.0-beta1"
 
 #define DEV_ENV
 #define SERIAL_LOG

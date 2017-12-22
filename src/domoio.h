@@ -2,6 +2,7 @@
 #define DOMOIO_H
 #include "Arduino.h"
 
+#define DOMOIO_VERSION "0.3.0"
 
 /*
  * ports
@@ -94,6 +95,7 @@ namespace domoio {
   void loop();
   void set_led_port(Port*);
   void set_reset_port(Port*);
+  void set_product_version(const char*);
 }
 
 

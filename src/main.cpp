@@ -23,7 +23,6 @@
 #include "storage.h"
 #include "reactduino.h"
 #include "scenes.h"
-#include "watchers.h"
 #include <cstdio>
 
 bool fatal_error = false;

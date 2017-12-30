@@ -47,6 +47,37 @@ void handle_event(event_type type, void * payload);
 
 int request_config();
 
+
+
+/*
+ * Watchers
+ */
+
+class Watcher {
+ public:
+  virtual void loop(long time) {}
+ Watcher(long _duration) : duration(_duration) {}
+ protected:
+  long last_exection;
+  long duration;
+
+  bool should_run(long time) {
+    if (time < this->last_exection || (time - this->last_exection) > this->duration) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void set_executed(long time) {
+    this->last_exection = time;
+  }
+};
+
+
+void setup_watcher(Watcher *watcher);
+void watchers_loop();
+
 /*
  * Messages
  */

@@ -1,0 +1,9 @@
+ESP_ROOT=../esp8266
+
+BOARD = generic
+FLASH_DEF = 1M64
+
+UPLOAD_PORT = /dev/tty.SLAB_USBtoUART
+UPLOAD_SPEED=230400
+
+include ./makeEspArduino.mk

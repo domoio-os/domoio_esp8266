@@ -1,0 +1,9 @@
+ESP_ROOT=../esp8266
+BOARD = nodemcuv2
+FLASH_DEF = 4M3M
+
+UPLOAD_PORT = /dev/tty.SLAB_USBtoUART
+UPLOAD_SPEED=230400
+
+
+include ./makeEspArduino.mk

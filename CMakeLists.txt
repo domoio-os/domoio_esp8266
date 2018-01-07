@@ -3,9 +3,17 @@ project (domoio)
 
 set (PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(ESP_ROOT ${PROJECT_ROOT}/../esp8266)
-set(AXTLS_ROOT ${PROJECT_ROOT}/../axtls-8266)
+IF(NOT ESP_ROOT)
+  set(ESP_ROOT ${PROJECT_ROOT}/../esp8266)
+ENDIF(NOT ESP_ROOT)
 
+IF(NOT AXTLS_ROOT)
+  set(AXTLS_ROOT ${PROJECT_ROOT}/../axtls-8266)
+ENDIF(NOT AXTLS_ROOT)
+
+message("-- Settings")
+message("     ESP_ROOT " ${ESP_ROOT})
+message("     AXTLS_ROOT " ${AXTLS_ROOT})
 
 set(XTENSA_BIN ${ESP_ROOT}/tools/xtensa-lx106-elf/bin)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x -Wno-deprecated -Os -g -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -MMD -ffunction-sections -fdata-sections" )

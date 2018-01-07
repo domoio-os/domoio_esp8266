@@ -3,7 +3,7 @@ Domoio firmware for ESP8266
 Domoio is a framework for home automation
 
 # Create a new project
-If you want to use domoio in your project, you'll need to build this library or download a precompiled binary. Check out the releases page to download the latest version, or read below the compile instructions.
+If you want to use domoio in your project, you'll need to build this library or download a precompiled binary. Check out the [releases page](https://github.com/eloy/domoio_esp8266/releases) to download the latest version, or read below the compile instructions.
 ## Requirements
 - Arduino IDE. Get the latest version from the [Arduino website](http://www.arduino.cc/en/main/software)
 - The [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
@@ -18,6 +18,26 @@ The project layout should looks like this:
     |-- makeEspArduino.mk
     |-- Makefile
     |-- sample_project.ino
+
+## Setup the Makefile
+Create a valid Makefile. Ckeck out the dir examples/makefiles for examples. Visit [https://github.com/plerup/makeEspArduino](https://github.com/plerup/makeEspArduino) for more information about the parameters.
+
+## Upload certificates
+Each domoio device require unique pair of rsa keys. You have to generte and flash these keys just one time per device.
+
+
+     mkdir root_fs && cd root_fs
+     openssl genrsa -out server.pem 1024
+     openssl rsa -in server.pem -outform PEM -pubout -out server.pub.pem
+
+     # Convert them to DER format
+     openssl rsa -in server.pem -outform DER -pubout -out server.pub.der
+     openssl rsa -in server.pem -outform DER -out server.der
+     rm server.pem server.pub.pem
+     cd ..
+
+     #Then, flash the new fs
+     make flash_fs FS_DIR=./root_fs
 
 
 ## Create your scketch
@@ -66,28 +86,13 @@ sample_project.ino
     }
 
 
-## Setup the Makefile
-Create a valid Makefile. Ckeck out the dir examples/makefiles for examples. Visit [https://github.com/plerup/makeEspArduino](https://github.com/plerup/makeEspArduino) for more information about the parameters.
-
-## Upload certificates
-
-     mkdir root_fs && cd root_fs
-     openssl genrsa -out server.pem 1024
-     openssl rsa -in server.pem -outform PEM -pubout -out server.pub.pem
-
-     # Convert them to DER format
-     openssl rsa -in server.pem -outform DER -pubout -out server.pub.der
-     openssl rsa -in server.pem -outform DER -out server.der
-     cd ..
-
-     #Then, flash the new fs
-     make flash_fs
 
 ## Flash the firmware
 
-    make flash FS_DIR=./root_fs
+    make flash
 
-## Wifi settings
+
+
 
 # Build instructions
 ## Requierements

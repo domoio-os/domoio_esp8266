@@ -5,6 +5,16 @@
 #include "ssl/crypto_misc.h"
 #include "crypto/crypto.h"
 
+bool verify_keys() {
+  if (!SPIFFS.begin()) {
+    return false;
+  }
+  bool exists = SPIFFS.exists("/server.pub.der") && SPIFFS.exists("/server.der");
+  SPIFFS.end();
+  return exists;
+}
+
+
 String get_public_key(){
   SPIFFS.begin();
   File f = SPIFFS.open("/server.pub.der", "r");

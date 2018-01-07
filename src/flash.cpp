@@ -1,3 +1,4 @@
+#include "domoio_core.h"
 #include "domoio.h"
 #include "storage.h"
 #include "reactduino.h"

@@ -23,22 +23,30 @@ void set_port(int port_id, int value) {
     PRINT("Invalid port requested: %d", port_id);
     return;
   }
-  port->value = value;
-  if (port->port_type == PORT_DIGITAL) {
+  port->set_value(value);
+}
+
+void Port::set_value(int value) {
+  if (this->active_low) {
+    value = value == 0 ? 1 : 0;
+  }
+
+  this->value = value;
+  if (this->port_type == PORT_DIGITAL) {
     if (value) {
-      digitalWrite(port->id, HIGH);
+      digitalWrite(this->id, HIGH);
     } else {
-      digitalWrite(port->id, LOW);
+      digitalWrite(this->id, LOW);
     }
   }
 }
-
 
 
 void init_ports() {
   for (SimpleList<Port *>::iterator itr = ports_list.begin(); itr != ports_list.end(); ++itr) {
     Port *port = (Port *)*itr;
     if (port->io == PORT_OUTPUT) {
+      port->set_value(0);
       pinMode(port->id, OUTPUT);
     } else {
       pinMode(port->id, INPUT);

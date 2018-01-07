@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "domoio_core.h"
 #include "domoio.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>

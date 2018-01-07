@@ -1,35 +1,27 @@
-#ifndef DOMOIO_H
-#define DOMOIO_H
+#ifndef DOMOIO_CORE_H
+#define DOMOIO_CORE_H
 
-#define FIRMWARE_VERSION "0.2.5"
-
-#include "customizations.h"
-void custom_setup();
+// #define DEV_ENV
+// #define SERIAL_LOG
 
 #include "FS.h"
 
-
-#ifdef SERIAL_LOG
-
-#define PRINT(...) Serial.printf(__VA_ARGS__)
-#define PRINTLN(str) Serial.println(str)
-
-#else
-
-#define PRINT(...) ((void)0)
-#define PRINTLN(str) ((void)0)
-
-#endif
-
 #define NETWORK_TIMEOUT 15000
 
+#define URI_BUFFER_LENGTH 25
+#define BUFFER_SIZE 512
+#define CHUNK_LENGTH 400
 
 #include "message.h"
+
+void init_ports();
+
 
 bool register_device(String name, String claim_code, String public_key);
 bool is_reconnect_requested();
 bool is_ota_requested();
 
+bool verify_keys();
 void delete_credentials();
 void reset();
 
@@ -92,7 +84,7 @@ String get_public_key();
 #define WIFI_CONFIG_FILE "/wifi"
 
 class WifiConfig {
-public:
+ public:
   char ssid[32];
   char password[64];
 
@@ -168,34 +160,4 @@ class DomoioConfig {
 
 extern DomoioConfig domoio_config;
 
-/*
- * ports
- */
-
-
-enum PortType {
-  PORT_DIGITAL,
-  PORT_ANALOGIC
-};
-
-enum PortIO {
-  PORT_INPUT,
-  PORT_OUTPUT
-};
-
-class Port {
- public:
-  int id;
-  int value;
-  PortType port_type;
-  PortIO io;
-};
-
-void setup_port(Port*);
-void init_ports();
-void reset_btn_callback();
-Port * get_port(int port_id);
-void set_port(int port_id, int value);
-
-
-#endif //DOMOIO_H
+#endif //DOMOIO_CORE_H

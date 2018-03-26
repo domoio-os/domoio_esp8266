@@ -2,7 +2,7 @@
 #define DOMOIO_CORE_H
 
 // #define DEV_ENV
-// #define SERIAL_LOG
+#define SERIAL_LOG
 
 #include "FS.h"
 
@@ -151,7 +151,7 @@ class DomoioConfig {
 #else
     this->api_url = "https://app.domoio.com";
     this->ssl_api = true;
-    this->api_fingerprint = "D7 79 01 81 F9 D4 53 17 D5 A9 5A EB 0D 78 C9 2B 7A E1 43 7F";
+    this->api_fingerprint = "CD BC 6A 4C D3 80 0F 87 8E EC 94 87 8B DB D0 CF A4 A9 56 07";
     this->host = "app.domoio.com";
     this->port = 5685;
 #endif

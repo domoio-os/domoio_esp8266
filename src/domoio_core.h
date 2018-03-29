@@ -56,7 +56,6 @@ class OTARequest {
   char fingerprint[OTA_REQUEST_FINGERPRINT_LENGTH];
 };
 
-void schedule_stock_ota_update();
 void run_ota_update();
 void schedule_ota_update(OTARequest *request);
 
@@ -137,7 +136,6 @@ class DomoioConfig {
  public:
   String api_url;
 
-  String api_fingerprint;
   bool ssl_api;
   String host;
   int port;
@@ -151,7 +149,6 @@ class DomoioConfig {
 #else
     this->api_url = "https://app.domoio.com";
     this->ssl_api = true;
-    this->api_fingerprint = "CD BC 6A 4C D3 80 0F 87 8E EC 94 87 8B DB D0 CF A4 A9 56 07";
     this->host = "app.domoio.com";
     this->port = 5685;
 #endif

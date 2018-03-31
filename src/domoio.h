@@ -2,7 +2,7 @@
 #define DOMOIO_H
 #include "Arduino.h"
 
-#define DOMOIO_VERSION "0.3.1"
+#define DOMOIO_VERSION "0.4.0"
 
 /*
  * ports

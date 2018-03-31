@@ -43,8 +43,14 @@ class OTARequest {
   }
 
   OTARequest(const char* url, int url_length, const char* fingerprint, int fingerprint_length) {
-    strncpy(&this->url[0], url, OTA_REQUEST_URL_LENGTH);
-    strncpy(&this->fingerprint[0], fingerprint, OTA_REQUEST_FINGERPRINT_LENGTH);
+    if (url_length + 1> OTA_REQUEST_URL_LENGTH || fingerprint_length + 1 > OTA_REQUEST_FINGERPRINT_LENGTH) {
+      return;
+    }
+
+    strncpy(&this->url[0], url, url_length);
+    this->url[url_length] = 0;
+    strncpy(&this->fingerprint[0], fingerprint, fingerprint_length);
+    this->fingerprint[fingerprint_length] = 0;
     this->https = true;
   }
 
@@ -56,7 +62,6 @@ class OTARequest {
   char fingerprint[OTA_REQUEST_FINGERPRINT_LENGTH];
 };
 
-void schedule_stock_ota_update();
 void run_ota_update();
 void schedule_ota_update(OTARequest *request);
 
@@ -137,7 +142,6 @@ class DomoioConfig {
  public:
   String api_url;
 
-  String api_fingerprint;
   bool ssl_api;
   String host;
   int port;
@@ -151,7 +155,6 @@ class DomoioConfig {
 #else
     this->api_url = "https://app.domoio.com";
     this->ssl_api = true;
-    this->api_fingerprint = "CD BC 6A 4C D3 80 0F 87 8E EC 94 87 8B DB D0 CF A4 A9 56 07";
     this->host = "app.domoio.com";
     this->port = 5685;
 #endif

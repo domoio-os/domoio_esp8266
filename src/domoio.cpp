@@ -251,15 +251,19 @@ void process_message(CoapPDU *msg) {
     send_confirmation(msg);
   }
   else if (strncmp(uri_buf, "/flash_url", 10) == 0) {
-    PRINTLN("Flashing from url");
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();
 
     // Check the first byte to know whether or not the url includes a fingerprint
     bool https = payload[0] == 1;
     OTARequest *request;
-    if (false) {
-      // TODO: Implement HTTPS
+
+    if (https) {
+      int fingerprint_length = buff2i(payload, 1);
+      int fingerprint_start = 3;
+      int url_start = fingerprint_length + fingerprint_start;
+      int url_length = payload_length - 3 - fingerprint_length;
+      request = new OTARequest((char*) payload + url_start, url_length, (char*) payload + fingerprint_start, fingerprint_length);
     } else {
       request = new OTARequest((char*) payload + 1, payload_length - 1);
     }
@@ -268,11 +272,6 @@ void process_message(CoapPDU *msg) {
     send_confirmation(msg);
   }
 
-  else if (strncmp(uri_buf, "/flash", 6) == 0) {
-    PRINTLN("Flashing device");
-    send_confirmation(msg);
-    schedule_stock_ota_update();
-  }
   else if (strncmp(uri_buf, "/ping", 5) == 0) {
     send_confirmation(msg);
   }
@@ -299,14 +298,14 @@ void receive_messages() {
 }
 
 
-bool register_device(String name, String claim_code, String public_key) {
+bool register_device(String claim_code, String public_key, String ssl_fingerprint) {
   HTTPClient http;
   String url = domoio_config.api_url + "/api/register_device";
   bool success = false;
-  PRINTLN(url);
+
   bool begin_success;
   if (domoio_config.ssl_api) {
-    begin_success = http.begin(url, domoio_config.api_fingerprint);
+    begin_success = http.begin(url, ssl_fingerprint);
   } else {
     begin_success = http.begin(url);
   }
@@ -318,8 +317,7 @@ bool register_device(String name, String claim_code, String public_key) {
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
   String post_data("");
-  post_data += "name=" + name +
-    "&claim_code=" + claim_code +
+  post_data += "&claim_code=" + claim_code +
     "&device[type]=esp8266" +
     "&device[public_key]=" + public_key +
     "&device[hardware_id]=" + String(ESP.getChipId());

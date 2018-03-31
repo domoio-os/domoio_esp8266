@@ -95,7 +95,7 @@ void handle_submit() {
   String ssid = server->arg("ssid");
   String encrypted_pwd = server->arg("pwd");
   String claim_code = server->arg("claim_code");
-  String name = server->arg("name");
+  String ssl_fingerprint = server->arg("ssl_fingerprint");
   int pwd_len = encrypted_pwd.length();
   char pwd_buf[pwd_len];
 
@@ -122,7 +122,7 @@ void handle_submit() {
 
   PRINTLN("Registering device");
 
-  while(register_device(name, claim_code, get_public_key()) != true) {
+  while(register_device(claim_code, get_public_key(), ssl_fingerprint) != true) {
     delay(500);
   }
 

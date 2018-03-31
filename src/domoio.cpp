@@ -251,15 +251,19 @@ void process_message(CoapPDU *msg) {
     send_confirmation(msg);
   }
   else if (strncmp(uri_buf, "/flash_url", 10) == 0) {
-    PRINTLN("Flashing from url");
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();
 
     // Check the first byte to know whether or not the url includes a fingerprint
     bool https = payload[0] == 1;
     OTARequest *request;
-    if (false) {
-      // TODO: Implement HTTPS
+
+    if (https) {
+      int fingerprint_length = buff2i(payload, 1);
+      int fingerprint_start = 3;
+      int url_start = fingerprint_length + fingerprint_start;
+      int url_length = payload_length - 3 - fingerprint_length;
+      request = new OTARequest((char*) payload + url_start, url_length, (char*) payload + fingerprint_start, fingerprint_length);
     } else {
       request = new OTARequest((char*) payload + 1, payload_length - 1);
     }

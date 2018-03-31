@@ -43,8 +43,14 @@ class OTARequest {
   }
 
   OTARequest(const char* url, int url_length, const char* fingerprint, int fingerprint_length) {
-    strncpy(&this->url[0], url, OTA_REQUEST_URL_LENGTH);
-    strncpy(&this->fingerprint[0], fingerprint, OTA_REQUEST_FINGERPRINT_LENGTH);
+    if (url_length + 1> OTA_REQUEST_URL_LENGTH || fingerprint_length + 1 > OTA_REQUEST_FINGERPRINT_LENGTH) {
+      return;
+    }
+
+    strncpy(&this->url[0], url, url_length);
+    this->url[url_length] = 0;
+    strncpy(&this->fingerprint[0], fingerprint, fingerprint_length);
+    this->fingerprint[fingerprint_length] = 0;
     this->https = true;
   }
 

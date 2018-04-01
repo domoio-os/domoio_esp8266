@@ -44,6 +44,7 @@ namespace domoio {
 #ifdef SERIAL_LOG
     Serial.begin(115200);
     // Serial.setDebugOutput(true);
+    Serial.println("\n\nStarting Domoio\n");
 #endif
     Storage::begin();
     reactduino::push_controller(&home_controller);
@@ -55,8 +56,9 @@ namespace domoio {
     }
 
     init_ports();
-
     WiFi.persistent(false);
+
+    try_ota_update_from_file();
     connect_wifi();
 
   }

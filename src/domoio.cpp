@@ -201,6 +201,7 @@ void disconnect() {
   client = NULL;
 }
 
+
 void process_message(CoapPDU *msg) {
   memset(&uri_buf[0], 0, URI_BUFFER_LENGTH);
   int uri_size;
@@ -250,6 +251,7 @@ void process_message(CoapPDU *msg) {
 
     send_confirmation(msg);
   }
+  // Flash
   else if (strncmp(uri_buf, "/flash_url", 10) == 0) {
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();

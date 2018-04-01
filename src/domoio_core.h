@@ -24,7 +24,7 @@ bool is_ota_requested();
 bool verify_keys();
 void delete_credentials();
 void reset();
-
+bool join_wifi_network(const char *ssid, const char *password);
 
 #define OTA_REQUEST_URL_LENGTH 512
 #define OTA_REQUEST_FINGERPRINT_LENGTH 128
@@ -64,7 +64,8 @@ class OTARequest {
 
 void run_ota_update();
 void schedule_ota_update(OTARequest *request);
-
+void try_ota_update_from_file();
+void create_ota_update_file(const char *ssid, const char* wifi_password, const char* url, const char* ssl_fingerprint);
 /*
  * Serial
  */

@@ -51,6 +51,7 @@ include_directories(
 set(SRC ${SRC}
   ./src/actions
   ./src/crypto
+  ./src/base64
   ./src/flash
   ./src/led
   ./src/message

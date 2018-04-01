@@ -1,3 +1,7 @@
+/**
+   https://stackoverflow.com/a/6782480
+*/
+
 #include <stdint.h>
 #include <stdlib.h>
 

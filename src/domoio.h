@@ -2,7 +2,8 @@
 #define DOMOIO_H
 #include "Arduino.h"
 
-#define DOMOIO_VERSION "0.4.0"
+#define DOMOIO_VERSION "0.5.0"
+// #define SERIAL_LOG
 
 /*
  * ports
@@ -33,9 +34,18 @@ class Port {
 typedef enum {
   EVENT_CONNECTED,
   EVENT_DISCONNECTED,
-  EVENT_NEW_CONFIG
+  EVENT_NEW_CONFIG,
+  EVENT_SET_PORT,
+  EVENT_DATETIME
 } event_type;
 
+
+class SetPortEvent {
+ public:
+  SetPortEvent(int _port_id, int _value) : port_id(_port_id), value(_value) {}
+  int port_id;
+  int value;
+};
 
 void setup_port(Port*);
 

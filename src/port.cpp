@@ -17,14 +17,6 @@ Port * get_port(int port_id) {
   return NULL;
 }
 
-void set_port(int port_id, int value) {
-  Port * port = get_port(port_id);
-  if (port == NULL) {
-    PRINT("Invalid port requested: %d", port_id);
-    return;
-  }
-  port->set_value(value);
-}
 
 void Port::set_value(int value) {
   if (this->active_low) {

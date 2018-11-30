@@ -202,13 +202,26 @@ void disconnect() {
 }
 
 
+void set_port(int port_id, int value) {
+  Port * port = get_port(port_id);
+  if (port) {
+    port->set_value(value);
+  }
+
+  // Forward the event
+  SetPortEvent e(port_id, value);
+  handle_event(EVENT_SET_PORT, &e);
+}
+
 void process_message(CoapPDU *msg) {
   memset(&uri_buf[0], 0, URI_BUFFER_LENGTH);
   int uri_size;
   msg->getURI(&uri_buf[0], URI_BUFFER_LENGTH, &uri_size);
 
-  // PRINT("URI: %s\n", &uri_buf[0]);
+  PRINT("URI [%d]: %s\n", uri_size, &uri_buf[0]);
 
+
+  // Set Port Values
   if (strncmp(uri_buf, "/set_ports", 11) == 0) {
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();
@@ -228,17 +241,7 @@ void process_message(CoapPDU *msg) {
     send_confirmation(msg);
   }
 
-  else if (strncmp(&uri_buf[0], "/blob_start", 11) == 0) {
-    start_transfer(msg);
-  }
-
-  else if (strncmp(&uri_buf[0], "/blob_chunk", 11) == 0) {
-    process_chunk(msg);
-  }
-  else if (strncmp(&uri_buf[0], "/blob_end", 9) == 0) {
-    finish_transfer(msg);
-  }
-
+  // Set Port value
   else if (strncmp(uri_buf, "/set", 4) == 0) {
     int payload_length = msg->getPayloadLength();
     uint8_t *payload = msg->getPayloadPointer();
@@ -251,6 +254,22 @@ void process_message(CoapPDU *msg) {
 
     send_confirmation(msg);
   }
+
+
+  else if (strncmp(&uri_buf[0], "/blob_start", 11) == 0) {
+    start_transfer(msg);
+  }
+
+  else if (strncmp(&uri_buf[0], "/blob_chunk", 11) == 0) {
+    process_chunk(msg);
+  }
+  else if (strncmp(&uri_buf[0], "/blob_end", 9) == 0) {
+    finish_transfer(msg);
+  }
+  else if (strncmp(&uri_buf[0], "/datetime", 9) == 0) {
+    handle_event(EVENT_DATETIME, msg->getPayloadPointer());
+  }
+
   // Flash
   else if (strncmp(uri_buf, "/flash_url", 10) == 0) {
     int payload_length = msg->getPayloadLength();
@@ -289,10 +308,11 @@ void receive_messages() {
     return;
   }
 
+  // PRINT("Message received with size: %d\n", size);
   CoapPDU coap_msg = CoapPDU(buffer, size);
 
   if (!coap_msg.validate()) {
-    PRINT("Bad packet rc");
+    PRINT("Bad packet rc\n");
     return;
   }
 

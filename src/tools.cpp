@@ -21,7 +21,7 @@ void int_to_buff32(byte *buffer, int value) {
 
 
 int buff32_to_int(byte *buffer) {
-  return *(buffer) << 24 | *(buffer + 2) << 8 | *(buffer + 3);
+  return *(buffer) << 24 | *(buffer + 1) << 16 | *(buffer + 2) << 8 | *(buffer + 3);
 }
 
 

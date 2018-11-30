@@ -2,7 +2,6 @@
 #define DOMOIO_CORE_H
 
 // #define DEV_ENV
-// #define SERIAL_LOG
 
 #include "FS.h"
 

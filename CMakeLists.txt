@@ -37,7 +37,7 @@ include_directories(
   ${ESP_ROOT}/libraries/ESP8266HTTPClient/src
   ${ESP_ROOT}/libraries/ESP8266WebServer/src
   ${ESP_ROOT}/libraries/DNSServer/src
-  ${ESP_ROOT}/libraries/Ticker
+  ${ESP_ROOT}/libraries/Ticker/src
   ${ESP_ROOT}/libraries/ArduinoOTA
 
   ${ESP_ROOT}/tools/sdk/include

@@ -180,6 +180,10 @@ void connect() {
   reactduino::dispatch(REACT_CONNECTING_DOMOIO);
   PRINTLN("connecting to Domoio");
   client = new WiFiClientSecure();
+
+  // TODO: Configure server verification
+  client->setInsecure();
+
   if (!client->connect(domoio_config.host.c_str(), domoio_config.port)) {
     PRINTLN("connection failed");
     return;

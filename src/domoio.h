@@ -2,7 +2,7 @@
 #define DOMOIO_H
 #include "Arduino.h"
 
-#define DOMOIO_VERSION "0.5.0"
+#define DOMOIO_VERSION "0.6.0"
 // #define SERIAL_LOG
 
 /*
